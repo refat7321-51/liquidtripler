@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assignment Submissions | Liquid_Triple_R Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div>
+            <h1 style="color: #1e293b; font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -0.025em;">Student Submissions</h1>
+            <p style="color: #64748b; margin-top: 0.25rem;">Review and grade assignments submitted by students.</p>
+        </div>
+        <a href="{% url 'assignment_list' %}" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: white; border: 1.5px solid #e2e8f0; border-radius: 12px; color: #475569; text-decoration: none; font-weight: 700; transition: all 0.2s;">
+            <i class="fas fa-arrow-left"></i> Back to Assignments
+        </a>
+    </div>
+
+    <!-- Table Container -->
+    <div style="background: white; border-radius: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; overflow: hidden;">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="background: #f8fafc; border-bottom: 1.5px solid #f1f5f9;">
+                        <th style="padding: 1.25rem 1.5rem; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Student Info</th>
+                        <th style="padding: 1.25rem 1.5rem; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Assignment</th>
+                        <th style="padding: 1.25rem 1.5rem; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Submission Date</th>
+                        <th style="padding: 1.25rem 1.5rem; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Status & Marks</th>
+                        <th style="padding: 1.25rem 1.5rem; font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody style="font-size: 0.95rem;">
+                    {% for sub in submissions %}
+                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='white'">
+                        <td style="padding: 1.25rem 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 36px; height: 36px; background: #e0e7ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #6366f1; font-weight: 800; font-size: 0.8rem;">
+                                    {{ sub.student.first_name|slice:":1" }}{{ sub.student.last_name|slice:":1" }}
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #1e293b;">{{ sub.student.get_full_name }}</div>
+                                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">ID: {{ sub.student.student_profile.student_id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 1.25rem 1.5rem;">
+                            <div style="font-weight: 600; color: #475569;">{{ sub.assignment.title }}</div>
+                        </td>
+                        <td style="padding: 1.25rem 1.5rem; color: #64748b; font-size: 0.85rem; font-weight: 500;">
+                            {{ sub.submitted_at|date:"d/m/Y" }}<br>
+                            <span style="font-size: 0.75rem; color: #94a3b8;">at {{ sub.submitted_at|date:"h:i A" }}</span>
+                        </td>
+                        <td style="padding: 1.25rem 1.5rem;">
+                            <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                {% if sub.is_published %}
+                                    <span style="display: inline-block; width: fit-content; padding: 2px 10px; border-radius: 99px; background: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Published</span>
+                                    <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">{{ sub.marks }} / {{ sub.assignment.total_marks }}</div>
+                                {% elif sub.is_graded %}
+                                    <span style="display: inline-block; width: fit-content; padding: 2px 10px; border-radius: 99px; background: #e0e7ff; color: #4338ca; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Graded (Private)</span>
+                                    <div style="font-weight: 800; color: #1e293b; font-size: 1rem;">{{ sub.marks }} / {{ sub.assignment.total_marks }}</div>
+                                {% else %}
+                                    <span style="display: inline-block; width: fit-content; padding: 2px 10px; border-radius: 99px; background: #fef3c7; color: #92400e; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Pending</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="padding: 1.25rem 1.5rem; text-align: right;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                {% if sub.file %}
+                                <a href="{{ sub.file.url }}" class="admin-action-btn" download style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: #f1f5f9; color: #475569; text-decoration: none; transition: all 0.2s;" title="Download File">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                {% endif %}
+                                {% if sub.drive_link %}
+                                <a href="{{ sub.drive_link }}" target="_blank" class="admin-action-btn" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; text-decoration: none; transition: all 0.2s;" title="View Drive Link">
+                                    <i class="fab fa-google-drive"></i>
+                                </a>
+                                {% endif %}
+                                <button onclick="openGradeModal({{ sub.id }}, '{{ sub.student.get_full_name }}', '{{ sub.marks }}', '{{ sub.feedback|escapejs }}', '{{ sub.assignment.total_marks }}')" 
+                                        style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 10px; background: #6366f1; color: white; border: none; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.85rem;" title="Edit Grade">
+                                    <i class="fas fa-edit"></i> Grade
+                                </button>
+                                {% if sub.is_graded and not sub.is_published %}
+                                <a href="{% url 'publish_result' sub.id %}" 
+                                   style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 10px; background: #10b981; color: white; text-decoration: none; font-weight: 700; transition: all 0.2s; font-size: 0.85rem;"
+                                   onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                                    <i class="fas fa-paper-plane"></i> Publish
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="padding: 5rem 2rem; text-align: center;">
+                            <div style="width: 64px; height: 64px; background: #f8fafc; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 1.5rem; color: #cbd5e1;">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <h3 style="font-weight: 800; color: #1e293b; margin: 0;">No submissions yet</h3>
+                            <p style="color: #64748b; margin-top: 0.25rem;">Waiting for students to upload their work.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modern Grading Modal -->
+<div id="gradeModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter: blur(8px); z-index:2000; align-items:center; justify-content:center; animation: fadeInModal 0.3s ease;">
+    <div style="width:90%; max-width:500px; background:white; border-radius:1.5rem; padding:2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: linear-gradient(to right, #6366f1, #a855f7);"></div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+            <div>
+                <h3 id="modalStudentName" style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin: 0;">Grading Submission</h3>
+                <p style="color: #64748b; margin-top: 0.25rem; font-size: 0.9rem;">Assign marks and provide feedback.</p>
+            </div>
+            <button onclick="closeGradeModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 8px; color: #64748b; cursor: pointer; transition: all 0.2s;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="gradeForm" method="POST">
+            {% csrf_token %}
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">Obtained Marks (out of <span id="maxMarks">100</span>)</label>
+                <input type="number" name="marks" id="modalMarks" min="0" required
+                       style="width: 100%; padding: 0.8rem 1rem; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 1rem; transition: all 0.2s; outline: none; box-sizing: border-box;">
+            </div>
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">Instructor's Feedback</label>
+                <textarea name="feedback" id="modalFeedback" rows="4" placeholder="Well done! Excellent work on the..." 
+                          style="width: 100%; padding: 0.8rem 1rem; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 1rem; transition: all 0.2s; outline: none; resize: vertical; box-sizing: border-box;"></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="button" class="btn-cancel" onclick="closeGradeModal()" style="flex: 1; padding: 0.9rem; border-radius: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #475569; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                    Cancel
+                </button>
+                <button type="submit" style="flex: 2; padding: 0.9rem; border-radius: 12px; background: #6366f1; border: none; color: white; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    @keyframes fadeInModal {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .admin-action-btn:hover {
+        background: #e2e8f0 !important;
+        color: #1e293b !important;
+        transform: scale(1.05);
+    }
+    button:hover {
+        opacity: 0.9;
+    }
+    .btn-cancel:hover {
+        background: #f1f5f9 !important;
+        color: #1e293b !important;
+    }
+</style>
+
+<script>
+    function openGradeModal(subId, name, currentMarks, currentFeedback, totalMarks) {
+        const modal = document.getElementById('gradeModal');
+        const form = document.getElementById('gradeForm');
+        
+        document.getElementById('modalStudentName').innerText = 'Grading: ' + name;
+        document.getElementById('modalMarks').value = currentMarks;
+        document.getElementById('modalFeedback').value = currentFeedback;
+        document.getElementById('maxMarks').innerText = totalMarks;
+        
+        // Ensure the ID is numeric and sanitized
+        form.action = `/submission/${subId}/grade/`;
+        modal.style.display = 'flex';
+        
+        // Focus on marks input
+        setTimeout(() => document.getElementById('modalMarks').focus(), 100);
+    }
+
+    function closeGradeModal() {
+        document.getElementById('gradeModal').style.display = 'none';
+    }
+
+    // Close on outside click
+    window.onclick = function(event) {
+        const modal = document.getElementById('gradeModal');
+        if (event.target == modal) {
+            closeGradeModal();
+        }
+    }
+</script>
+{% endblock %}

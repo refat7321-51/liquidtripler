@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Progress Report - {{ target_user.get_full_name|default:target_user.username }} | Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
+    
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 2rem;">
+        <a href="{% url 'student_list' %}" style="text-decoration: none; color: #64748b; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;" onmouseover="this.style.color='#3b82f6'" onmouseout="this.style.color='#64748b'">
+            <i class="fas fa-arrow-left"></i> Back to Student List
+        </a>
+    </nav>
+
+    <!-- Header / Hero -->
+    <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 3rem; border-radius: 1.5rem; color: white; margin-bottom: 2rem; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap;">
+        <div style="position: relative; z-index: 1;">
+            <div style="width: 140px; height: 140px; border-radius: 50%; overflow: hidden; border: 5px solid rgba(255,255,255,0.15); box-shadow: 0 8px 25px rgba(0,0,0,0.2);">
+                {% if profile.profile_image %}
+                    <img src="{{ profile.profile_image.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #06b6d4, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 3.5rem; font-weight: 800;">
+                        {{ profile.get_avatar_letter }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="position: relative; z-index: 1; flex: 1; min-width: 300px;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                <h1 style="font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -1px;">{{ target_user.get_full_name|default:target_user.username }}</h1>
+                <span style="background: rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 0.75rem; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.1);">
+                    ID: #{{ profile.student_id|default:"---" }}
+                </span>
+            </div>
+            <p style="opacity: 0.7; font-size: 1.1rem; margin-bottom: 1.5rem; font-weight: 500;">
+                <i class="far fa-envelope"></i> {{ target_user.email }}
+            </p>
+            
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div style="background: rgba(6,182,212,0.2); border: 1px solid rgba(6,182,212,0.3); padding: 0.6rem 1.2rem; border-radius: 1rem; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fas {% if my_rank <= 3 %}fa-crown{% else %}fa-medal{% endif %}" style="color: #06b6d4;"></i>
+                    <span style="font-weight: 800; font-size: 0.95rem;">Rank: <span style="color: #06b6d4;">#{{ my_rank|default:"---" }}</span></span>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); padding: 0.6rem 1.2rem; border-radius: 1rem; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fas fa-calendar-check" style="color: #10b981;"></i>
+                    <span style="font-weight: 700; font-size: 0.95rem;">Attendance: <span style="color: #10b981;">{{ profile.attendance_count }} Days</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Decoration -->
+        <div style="position: absolute; top: -50px; right: -50px; width: 250px; height: 250px; background: rgba(6,182,212,0.15); border-radius: 50%; filter: blur(50px);"></div>
+    </div>
+
+    <!-- Admin Actions & Quick Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+        <!-- Bonus Marks Adjustment (Admin Only) -->
+        <div style="background: #f8fafc; padding: 1.5rem; border-radius: 1.25rem; border: 2px dashed #06b6d4; display: flex; flex-direction: column; justify-content: center; gap: 0.75rem;">
+            <div style="color: #06b6d4; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Admin Adjust: Bonus Marks</div>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="number" id="bonusAmount" value="0" style="width: 60px; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-weight: 700;">
+                <button onclick="adjustBonus('add')" style="flex: 1; background: #06b6d4; color: white; border: none; padding: 0.4rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">+ Add</button>
+                <button onclick="adjustBonus('minus')" style="flex: 1; background: #ef4444; color: white; border: none; padding: 0.4rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">- Minus</button>
+            </div>
+            <div id="bonusMsg" style="font-size: 0.7rem; font-weight: 600; min-height: 1em;"></div>
+        </div>
+
+        <div style="background: white; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; text-align: center;">
+            <div style="color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Total Points Acquired</div>
+            <div id="totalPointsDisplay" style="font-size: 2.2rem; font-weight: 800; color: #06b6d4;">{{ total_marks }}</div>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; text-align: center;">
+            <div style="color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Quizzes Completed</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #3b82f6;">{{ attempts.count }}</div>
+        </div>
+        <div style="background: white; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; text-align: center;">
+            <div style="color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Assignment Projects</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: #10b981;">{{ submissions.count }}</div>
+        </div>
+    </div>
+
+    <!-- Student Achievements (Badge Visibility for Admin) -->
+    <div style="background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; margin-bottom: 2.5rem;">
+        <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fas fa-medal" style="color: #6366f1;"></i> Earned Achievements
+        </h3>
+        
+        {% if earned_badges %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; text-align: center;">
+                {% for eb in earned_badges %}
+                <div style="padding: 1rem; background: #f8fafc; border-radius: 1rem; border: 1px solid #e2e8f0;">
+                    <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; margin: 0 auto 0.75rem; box-shadow: 0 4px 10px rgba(250, 187, 5, 0.2); border: 2px solid white;">
+                        <i class="{{ eb.badge.icon_class }}"></i>
+                    </div>
+                    <div style="font-weight: 800; color: #1e293b; font-size: 0.8rem;">{{ eb.badge.name }}</div>
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 600; margin-top: 2px;">{{ eb.earned_at|date:"d/m/Y" }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 2rem; background: #f8fafc; border-radius: 1rem; border: 1px dashed #cbd5e1; color: #94a3b8; font-weight: 600;">
+                No badges granted to this student yet.
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Details Section -->
+    <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+        
+        <!-- Quiz History -->
+        <div style="background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
+            <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-tasks" style="color: #3b82f6;"></i> Quiz Performance History
+            </h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #f1f5f9;">
+                            <th style="padding: 1rem; text-align: left; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Quiz Title</th>
+                            <th style="padding: 1rem; text-align: center; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Date</th>
+                            <th style="padding: 1rem; text-align: right; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if attempts %}
+                            {% for attempt in attempts %}
+                            <tr style="border-bottom: 1px solid #f8fafc;">
+                                <td style="padding: 1rem; font-weight: 700; color: #334155;">{{ attempt.quiz.title }}</td>
+                                <td style="padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.85rem;">{{ attempt.submitted_at|date:"d/m/Y" }}</td>
+                                <td style="padding: 1rem; text-align: right;">
+                                    <span style="background: #eff6ff; color: #3b82f6; padding: 0.3rem 0.6rem; border-radius: 0.5rem; font-weight: 800;">
+                                        {{ attempt.score }}/{{ attempt.total_questions }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" style="padding: 2rem; text-align: center; color: #94a3b8;">No attempts recorded.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Assignment Projects -->
+        <div style="background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
+            <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                <i class="fas fa-project-diagram" style="color: #10b981;"></i> Assignment (Project) Submissions
+            </h3>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #f1f5f9;">
+                            <th style="padding: 1rem; text-align: left; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Project Title</th>
+                            <th style="padding: 1rem; text-align: center; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Status</th>
+                            <th style="padding: 1rem; text-align: right; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Marks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if submissions %}
+                            {% for sub in submissions %}
+                            <tr style="border-bottom: 1px solid #f8fafc;">
+                                <td style="padding: 1rem; font-weight: 700; color: #334155;">{{ sub.assignment.title }}</td>
+                                <td style="padding: 1rem; text-align: center;">
+                                    {% if sub.is_graded %}
+                                        <span style="color: #10b981; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">Graded</span>
+                                    {% else %}
+                                        <span style="color: #f59e0b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1rem; text-align: right;">
+                                    <span style="background: #f0fdf4; color: #10b981; padding: 0.3rem 0.6rem; border-radius: 0.5rem; font-weight: 800;">
+                                        {{ sub.marks|default:0 }}/{{ sub.assignment.total_marks }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" style="padding: 2rem; text-align: center; color: #94a3b8;">No submissions recorded.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function adjustBonus(action) {
+    const amount = document.getElementById('bonusAmount').value;
+    const msg = document.getElementById('bonusMsg');
+    
+    msg.innerHTML = '<span style="color: #64748b;">Updating...</span>';
+    
+    fetch('{% url "admin_adjust_bonus_marks" target_user.id %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            action: action,
+            amount: amount
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            msg.innerHTML = '<span style="color: #10b981;">✅ Updated successfully!</span>';
+            // Reload page to update rank and total points
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        } else {
+            msg.innerHTML = `<span style="color: #ef4444;">❌ Error: ${data.error}</span>`;
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        msg.innerHTML = '<span style="color: #ef4444;">❌ Something went wrong!</span>';
+    });
+}
+</script>
+{% endblock %}
