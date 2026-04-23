@@ -1,5 +1,5 @@
-#!/bin/bash
-pip install -r requirements.txt
-python manage.py collectstatic --noinput
-python manage.py migrate --noinput
-python manage.py shell -c "from django.contrib.auth.models import User; [User.objects.create_superuser(u, f'{u}@ex.com', '730323') for u in ['admin_refat', 'admin_ridoy', 'admin_rafi'] if not User.objects.filter(username=u).exists()]"
+# build_files.sh
+echo "Building the project..."
+python3.9 -m pip install -r requirements.txt --break-system-packages
+python3.9 manage.py collectstatic --noinput --clear
+echo "Build complete."
