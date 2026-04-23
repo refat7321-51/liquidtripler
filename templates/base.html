@@ -234,14 +234,28 @@
         .sidebar-menu::-webkit-scrollbar { display: none; /* Hide scrollbar for Chrome/Safari */ }
         
 
-        /* Hide hamburger toggle by default (Desktop/Webview) */
         .hamburger-toggle { display: none !important; }
 
         @media (max-width: 991px) {
             .sidebar { transform: translateX(-100%); width: 260px; }
             .main-content-area { margin-left: 0; width: 100%; }
             /* Show hamburger on mobile */
-            .hamburger-toggle { display: flex !important; }
+            .hamburger-toggle { 
+                display: flex !important; 
+                flex-direction: column;
+                gap: 5px;
+                cursor: pointer;
+                padding: 10px;
+                z-index: 1001;
+            }
+            .hbg-bar {
+                display: block;
+                width: 25px;
+                height: 3px;
+                background-color: #1e293b;
+                border-radius: 3px;
+                transition: all 0.3s ease;
+            }
         }
 
         @media (max-width: 768px) {
@@ -435,10 +449,10 @@
             {% block navbar %}
             <!-- Top Navbar -->
             <header class="top-navbar">
-                <div class="hamburger-toggle" id="mobile-toggle" style="margin-right: auto;">
-                    <span class="hbg-bar hbg-bar-1"></span>
-                    <span class="hbg-bar hbg-bar-2"></span>
-                    <span class="hbg-bar hbg-bar-3"></span>
+                <div class="hamburger-toggle mobile-only" id="mobile-toggle" style="margin-right: auto;">
+                    <span class="hbg-bar"></span>
+                    <span class="hbg-bar"></span>
+                    <span class="hbg-bar"></span>
                 </div>
                 
                 {% if user.is_authenticated %}
