@@ -196,8 +196,8 @@ The application will be available at: **http://127.0.0.1:8000**
 
 1. **Admin Login**
    - Click "Admin Login" in navigation
-   - Username: admin
-   - Password: admin123
+   - Username: 
+   - Password: 
 
 2. **Dashboard**
    - View statistics (total quizzes, attempts, warnings)
