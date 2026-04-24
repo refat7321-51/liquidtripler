@@ -409,15 +409,30 @@
     .ad-acts { gap: 4px; }
     .ad-act { padding: 4px 10px; font-size: 0.72rem; }
     
-    /* Ensure panels are visible and have proper spacing on mobile */
+    /* Global Panel Visibility Fix for Mobile */
+    .ad-panel { display: none !important; }
+    .ad-panel.active { display: block !important; }
+
     .ad-card {
         margin-bottom: 2rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #f1f5f9;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     
     .ad-mobile-cards {
         display: flex !important;
-        padding: 1rem;
+        flex-direction: column !important;
+        padding: 1.25rem !important;
+        gap: 1.25rem !important;
+    }
+
+    .ad-m-card {
+        background: white !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        border: 1px solid #f1f5f9;
+        display: block !important; /* Force visible */
     }
 }
 
@@ -437,8 +452,8 @@
 }
 
 @media(max-width:768px){
-    .ad-tbl-wrap { display: none; }
-    .ad-mobile-cards { display: flex; }
+    .ad-tbl-wrap { display: none !important; }
+    .ad-mobile-cards { display: flex !important; }
 }
 </style>
 {% endblock %}
