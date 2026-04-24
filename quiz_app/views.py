@@ -677,13 +677,28 @@ def student_profile(request):
         else:
             percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
             
+        # Add requirement text
+        req_text = ""
+        if badge.requirement_type == 'quiz_count': req_text = f"Submit {badge.requirement_value} Quizzes"
+        elif badge.requirement_type == 'total_score_threshold': req_text = f"Earn {badge.requirement_value} Points"
+        elif badge.requirement_type == 'resource_download': req_text = f"Download {badge.requirement_value} Resources"
+        elif badge.requirement_type == 'leaderboard_rank': 
+            if badge.requirement_value == 1: req_text = "Reach Rank 1"
+            elif badge.requirement_value == 2: req_text = "Reach Top 2"
+            else: req_text = "Reach Top 3"
+        elif badge.requirement_type == 'high_score': req_text = "Get 100% in a Quiz"
+        elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
+        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
+        elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
+        
         badge_progress.append({
             'badge': badge,
             'is_earned': is_earned,
             'current_val': current_val,
             'target_val': target_val,
             'percent': percent,
-            'remaining': max(0, target_val - current_val) if badge.requirement_type != 'leaderboard_rank' else (max(0, current_val - target_val) if current_val > 0 else target_val)
+            'remaining': max(0, target_val - current_val) if badge.requirement_type != 'leaderboard_rank' else (max(0, current_val - target_val) if current_val > 0 else target_val),
+            'requirement_text': req_text
         })
 
     # Sort badges: Earned badges first, then by progress percentage
@@ -1565,11 +1580,28 @@ def student_dashboard(request):
                 progress = 0
                 status_text = "Not earned yet"
 
+        # Add requirement text
+        req_text = ""
+        if badge.requirement_type == 'quiz_count': req_text = f"Submit {badge.requirement_value} Quizzes"
+        elif badge.requirement_type == 'total_score_threshold': req_text = f"Earn {badge.requirement_value} Points"
+        elif badge.requirement_type == 'resource_download': req_text = f"Download {badge.requirement_value} Resources"
+        elif badge.requirement_type == 'leaderboard_rank': 
+            if badge.requirement_value == 1: req_text = "Reach Rank 1"
+            elif badge.requirement_value == 2: req_text = "Reach Top 2"
+            else: req_text = "Reach Top 3"
+        elif badge.requirement_type == 'high_score': req_text = "Get 100% in a Quiz"
+        elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
+        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
+        elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
+
         badges_data.append({
             'badge': badge,
             'is_earned': is_earned,
             'progress': progress,
-            'status_text': status_text
+            'status_text': status_text,
+            'current_val': current_val,
+            'target_val': target_val,
+            'requirement_text': req_text
         })
     
     # Sort badges: Earned badges first, then by progress percentage
@@ -2096,11 +2128,27 @@ def admin_student_progress(request, user_id):
             else:
                 percent = min(100, (current_val / target_val) * 100)
         
+        # Add requirement text
+        req_text = ""
+        if badge.requirement_type == 'quiz_count': req_text = f"Submit {badge.requirement_value} Quizzes"
+        elif badge.requirement_type == 'total_score_threshold': req_text = f"Earn {badge.requirement_value} Points"
+        elif badge.requirement_type == 'resource_download': req_text = f"Download {badge.requirement_value} Resources"
+        elif badge.requirement_type == 'leaderboard_rank': 
+            if badge.requirement_value == 1: req_text = "Reach Rank 1"
+            elif badge.requirement_value == 2: req_text = "Reach Top 2"
+            else: req_text = "Reach Top 3"
+        elif badge.requirement_type == 'high_score': req_text = "Get 100% in a Quiz"
+        elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
+        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
+        elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
+
         badge_progress.append({
             'badge': badge,
             'is_earned': is_earned,
             'current_val': current_val,
-            'percent': int(percent)
+            'target_val': target_val,
+            'percent': int(percent),
+            'requirement_text': req_text
         })
 
     # Sort badges: Earned badges first, then by percent

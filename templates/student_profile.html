@@ -137,15 +137,16 @@
 
                 <!-- Info -->
                 <div style="width: 100%;">
-                    <h4 style="font-weight: 800; color: #1e293b; font-size: 1.05rem; margin: 0 0 6px;">{{ item.badge.name }}</h4>
+                    <h4 style="font-weight: 800; color: #1e293b; font-size: 1.05rem; margin: 0 0 4px;">{{ item.badge.name }}</h4>
+                    <p style="font-size: 0.75rem; color: #6366f1; margin: 0 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{{ item.requirement_text }}</p>
                     <p style="font-size: 0.8rem; color: #64748b; margin: 0; line-height: 1.4; font-weight: 600;">{{ item.badge.description }}</p>
                 </div>
 
                 <!-- Progress Section -->
                 <div style="width: 100%; margin-top: auto;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; color: #475569; margin-bottom: 8px;">
-                        <span style="color: #6366f1;">Progress:</span>
-                        <span style="color: #94a3b8;">{{ item.current_val }} / {{ item.target_val }}</span>
+                        <span style="color: #64748b;">Progress:</span>
+                        <span style="color: #1e293b;">{{ item.current_val }} / {{ item.target_val }}</span>
                     </div>
                     <div style="height: 12px; background: #e2e8f0; border-radius: 10px; overflow: hidden; width: 100%; border: 1px solid #f1f5f9;">
                         <div style="height: 100%; width: {{ item.percent }}%; 
@@ -154,7 +155,7 @@
                         </div>
                     </div>
                     {% if not item.is_earned %}
-                    <div style="font-size: 0.7rem; color: #f59e0b; font-weight: 700; margin-top: 8px; text-align: right; letter-spacing: 0.5px;">{{ item.remaining }} MORE TO GO</div>
+                    <div style="font-size: 0.7rem; color: #f59e0b; font-weight: 700; margin-top: 8px; text-align: right; letter-spacing: 0.5px;">{{ item.percent }}% DONE</div>
                     {% else %}
                     <div style="font-size: 0.7rem; color: #10b981; font-weight: 700; margin-top: 8px; text-align: right; letter-spacing: 0.5px;"><i class="fas fa-check-circle"></i> COMPLETED</div>
                     {% endif %}
