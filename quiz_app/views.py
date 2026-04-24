@@ -96,68 +96,108 @@ def get_user_ranking_stats(user):
     return user_total, rank
 
 
-def check_badges(user):
-    # 1. First Quiz Badge (requirement_type='quiz_count', value=1)
-    attempts_count = StudentAttempt.objects.filter(student=user, is_submitted=True).count()
-    if attempts_count >= 1:
-        badge = Badge.objects.filter(requirement_type='quiz_count', requirement_value=1).first()
-        if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
+def ensure_badges_seeded():
+    from .models import Badge
+    badges = [
+        ('Quiz Master', 'quiz_count', 5, 'Complete 5 quizzes', 'fas fa-user-graduate'),
+        ('Top Ranker', 'leaderboard_rank', 1, 'Reach Rank 1', 'fas fa-crown'),
+        ('Silver Medalist', 'leaderboard_rank', 2, 'Reach Rank 2', 'fas fa-medal'),
+        ('Bronze Medalist', 'leaderboard_rank', 3, 'Reach Rank 3', 'fas fa-award'),
+        ('Point Millionaire', 'total_score_threshold', 500, 'Earn 500 total points', 'fas fa-coins'),
+        ('Resource Hunter', 'resource_download', 5, 'Download 5 resources', 'fas fa-book-open'),
+        ('Looser', 'total_tab_switches', 5, '5 tab switch warnings', 'fas fa-ghost'),
+        ('Mastermind', 'high_score', 3, '100% in 3 consecutive quizzes', 'fas fa-brain'),
+    ]
+    for name, req_type, req_val, desc, icon in badges:
+        Badge.objects.get_or_create(
+            name=name,
+            requirement_type=req_type,
+            requirement_value=req_val,
+            defaults={'description': desc, 'icon_class': icon}
+        )
+
+def get_badge_data(user):
+    from .models import Badge, EarnedBadge, StudentAttempt, ActivityLog, WarningLog, AssignmentSubmission, Attendance
+    profile, _ = StudentProfile.objects.get_or_create(user=user)
     
-    # 2. High Scorer / Mastermind (requirement_type='high_score', value=100)
-    full_score_attempts = StudentAttempt.objects.filter(student=user, is_submitted=True)
-    for attempt in full_score_attempts:
-        if attempt.score == attempt.total_questions and attempt.total_questions > 0:
-            badge = Badge.objects.filter(requirement_type='high_score', requirement_value=100).first()
-            if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
-            break
+    # Ensure badges exist
+    ensure_badges_seeded()
+    
+    # Get Rank and Total Score
+    total_marks, my_rank = get_user_ranking_stats(user)
+    
+    # Pre-calculate common stats
+    q_count = StudentAttempt.objects.filter(student=user, is_submitted=True).count()
+    res_count = ActivityLog.objects.filter(user=user, action='Downloaded Resource').count()
+    
+    # Perfect 100 Streak Logic (3 consecutive 100% scores)
+    last_attempts = StudentAttempt.objects.filter(student=user, is_submitted=True).order_by('-submitted_at')
+    streak = 0
+    for a in last_attempts:
+        if a.score == a.total_questions and a.total_questions > 0:
+            streak += 1
+        else:
+            break # Streak broken
+            
+    earned_badge_ids = set(EarnedBadge.objects.filter(user=user).values_list('badge_id', flat=True))
+    all_badges = Badge.objects.all()
+    
+    badge_progress = []
+    for badge in all_badges:
+        # Rank Filtering: Only show the badge for the rank I am CURRENTLY in (if it's a rank badge)
+        if badge.requirement_type == 'leaderboard_rank':
+            # Hide Silver if I'm Gold, hide Gold if I'm Silver, etc.
+            if badge.requirement_value != my_rank:
+                continue
+        
+        is_earned = badge.id in earned_badge_ids
+        current_val = 0
+        target_val = badge.requirement_value
+        
+        if badge.requirement_type == 'quiz_count':
+            current_val = q_count
+        elif badge.requirement_type == 'resource_download':
+            current_val = res_count
+        elif badge.requirement_type == 'total_score_threshold':
+            current_val = total_marks
+        elif badge.requirement_type == 'leaderboard_rank':
+            current_val = 1 if my_rank == badge.requirement_value else 0
+            target_val = 1
+            percent = 100 if my_rank == badge.requirement_value else 0
+        elif badge.requirement_type == 'high_score' or badge.requirement_type == 'perfect_score_count':
+            current_val = streak
+            target_val = 3
+        elif badge.requirement_type == 'total_tab_switches' or badge.requirement_type == 'warning_count':
+            from django.db.models import Sum
+            current_val = StudentAttempt.objects.filter(student=user).aggregate(Sum('tab_switch_count'))['tab_switch_count__sum'] or 0
+        else:
+            current_val = 1 if is_earned else 0
+            target_val = 1
 
-    # 3. Resource Explorer (requirement_type='resource_download', value=5)
-    resource_activity = ActivityLog.objects.filter(user=user, action='Downloaded Resource').count()
-    if resource_activity >= 5:
-        badge = Badge.objects.filter(requirement_type='resource_download', requirement_value=5).first()
-        if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
+        if badge.requirement_type != 'leaderboard_rank':
+            percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
+            
+        badge_progress.append({
+            'badge': badge,
+            'is_earned': is_earned or percent >= 100,
+            'current_val': current_val,
+            'target_val': target_val,
+            'percent': percent
+        })
+    
+    # Sort: Earned first, then by name
+    badge_progress.sort(key=lambda x: (not x['is_earned'], x['badge'].name))
+    return badge_progress
 
-    # 4. Point Crusher (requirement_type='total_score_threshold', value=150)
-    total_score, rank = get_user_ranking_stats(user)
-    if total_score >= 150:
-        badge = Badge.objects.filter(requirement_type='total_score_threshold', requirement_value=150).first()
-        if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
 
-    # 5. Top 3 Contender (requirement_type='leaderboard_rank', value=3)
-    if rank <= 3:
-        badge = Badge.objects.filter(requirement_type='leaderboard_rank', requirement_value=3).first()
-        if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
+def check_badges(user):
+    # This function is called after each quiz attempt
+    badge_data = get_badge_data(user)
+    from .models import EarnedBadge
+    for item in badge_data:
+        if item['is_earned']:
+            EarnedBadge.objects.get_or_create(user=user, badge=item['badge'])
 
-    # 6. No Penalty Hero (requirement_type='no_penalty_full_score', value=0)
-    no_penalty_full = StudentAttempt.objects.filter(student=user, is_submitted=True, tab_switch_count=0)
-    for att in no_penalty_full:
-        if att.score == att.total_questions and att.total_questions > 0:
-            badge = Badge.objects.filter(requirement_type='no_penalty_full_score').first()
-            if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
-            break
-
-    # 7. Consistent Learner (requirement_type='consistency_streak', value=3)
-    last_3 = StudentAttempt.objects.filter(student=user, is_submitted=True).order_by('-submitted_at')[:3]
-    if last_3.count() == 3:
-        consistent = True
-        for att in last_3:
-            if att.total_questions > 0:
-                if (att.score / att.total_questions) < 0.9:
-                    consistent = False
-                    break
-            else:
-                consistent = False
-                break
-        if consistent:
-            badge = Badge.objects.filter(requirement_type='consistency_streak', requirement_value=3).first()
-            if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
-
-    # 8. Looser Badge (requirement_type='total_tab_switches', value=5)
-    from django.db.models import Sum
-    total_switches = StudentAttempt.objects.filter(student=user).aggregate(Sum('tab_switch_count'))['tab_switch_count__sum'] or 0
-    if total_switches >= 5:
-        badge = Badge.objects.filter(requirement_type='total_tab_switches', requirement_value=5).first()
-        if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
 
 
 # ==================== STUDENT AUTH ====================
@@ -510,68 +550,22 @@ def student_profile(request):
     # Earned Badges
     earned_badges = EarnedBadge.objects.filter(user=request.user).select_related('badge')
 
-    # --- Badge Progress Tracking ---
-    from .models import Badge
-    all_badges = Badge.objects.all()
-    earned_badge_ids = set(earned_badges.values_list('badge_id', flat=True))
-    
-    badge_progress = []
-    
-    # Pre-calculate common stats for efficiency
-    q_count = StudentAttempt.objects.filter(student=request.user, is_submitted=True).count()
-    res_count = ActivityLog.objects.filter(user=request.user, action='Downloaded Resource').count()
-    
-    for badge in all_badges:
-        is_earned = badge.id in earned_badge_ids
-        current_val = 0
-        target_val = badge.requirement_value
-        
-        if badge.requirement_type == 'quiz_count':
-            current_val = q_count
-        elif badge.requirement_type == 'resource_download':
-            current_val = res_count
-        elif badge.requirement_type == 'total_score_threshold':
-            current_val = total_marks
-        elif badge.requirement_type == 'leaderboard_rank':
-            current_val = my_rank if my_rank else 0
-            percent = 100 if (my_rank and my_rank <= target_val) else (20 if my_rank else 0)
-        elif badge.requirement_type == 'perfect_score_count' or badge.requirement_type == 'high_score':
-            current_val = StudentAttempt.objects.filter(
-                student=request.user, is_submitted=True
-            ).extra(where=["score = total_questions AND total_questions > 0"]).count()
-        elif badge.requirement_type == 'warning_count':
-            current_val = WarningLog.objects.filter(attempt__student=request.user, warning_type='tab_switch').count()
-        else:
-            current_val = 1 if is_earned else 0
-            target_val = 1
-
-        if badge.requirement_type != 'leaderboard_rank':
-            percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
-            
-        badge_progress.append({
-            'badge': badge,
-            'is_earned': is_earned or percent >= 100,
-            'current_val': current_val,
-            'target_val': target_val,
-            'percent': percent
-        })
-
-    # Sort: Earned badges first
-    badge_progress.sort(key=lambda x: x['is_earned'], reverse=True)
+    total_marks, my_rank = get_user_ranking_stats(request.user)
+    badge_progress = get_badge_data(request.user)
+    earned_badges = EarnedBadge.objects.filter(user=request.user).select_related('badge')
 
     context = {
-
         'student': request.user,
         'profile': profile,
         'attempts': attempts,
         'my_rank': my_rank,
-        'total_students': len(temp),
         'total_marks': total_marks,
         'earned_badges': earned_badges,
-        'badge_progress': badge_progress, # New: tracking list
-        'attendance_count': att_count_self,
+        'badge_progress': badge_progress,
+        'attendance_count': profile.attendance_count,
     }
     return render(request, 'student_profile.html', context)
+
 
 
 # ==================== ADMIN VIEWS ====================
@@ -907,10 +901,16 @@ def home(request):
 
     quiz_list.sort(key=quiz_sort_key)
 
+    badge_progress = []
+    if request.user.is_authenticated and not request.user.is_staff:
+        badge_progress = get_badge_data(request.user)
+
     context = {
         'quiz_list': quiz_list,
         'profile': profile,
+        'badge_progress': badge_progress,
     }
+
     return render(request, 'home.html', context)
 
 

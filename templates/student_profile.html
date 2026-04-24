@@ -128,11 +128,12 @@
                                 background: {% if item.is_earned %}linear-gradient(135deg, #fceabb 0%, #f8b500 100%){% else %}#e2e8f0{% endif %};
                                 color: {% if item.is_earned %}white{% else %}#94a3b8{% endif %};
                                 {% if item.is_earned %}animation: pulse-glow 2.5s infinite ease-in-out;{% endif %}">
-                        {% if item.badge.name == 'Top Ranker' and item.is_earned %}<i class="fas fa-crown"></i>
-                        {% elif item.badge.name == 'Silver Medalist' and item.is_earned %}<i class="fas fa-medal"></i>
-                        {% elif item.badge.name == 'Bronze Medalist' and item.is_earned %}<i class="fas fa-award"></i>
+                        {% if item.badge.name == 'Top Ranker' %}<i class="fas fa-crown"></i>
+                        {% elif item.badge.name == 'Silver Medalist' %}<i class="fas fa-medal"></i>
+                        {% elif item.badge.name == 'Bronze Medalist' %}<i class="fas fa-award"></i>
                         {% else %}<i class="{{ item.badge.icon_class }}"></i>{% endif %}
                     </div>
+
 
                     <!-- Badge Text -->
                     <div style="flex: 1; min-width: 0;">
