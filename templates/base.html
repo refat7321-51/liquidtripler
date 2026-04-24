@@ -340,7 +340,7 @@
             </div>
 
             <div class="sidebar-profile" style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center;">
-                {% if not user.is_staff and user.student_profile.profile_image %}
+                {% if user.student_profile.profile_image %}
                     <img src="{{ user.student_profile.profile_image.url }}" id="sidebarAvatarImg" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.1); margin-bottom: 0.75rem;" alt="profile">
                 {% else %}
                     <div id="sidebarAvatarLetter" style="width: 70px; height: 70px; border-radius: 50%; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 0.75rem;">
@@ -570,7 +570,7 @@
                         {% endif %}
                     </div>
                     <a href="{% if user.is_staff %}/admin/profile/{% else %}/profile/{% endif %}" style="text-decoration: none; display: flex; align-items: center;">
-                        {% if not user.is_staff and user.student_profile.profile_image %}
+                        {% if user.student_profile.profile_image %}
                             <img src="{{ user.student_profile.profile_image.url }}" id="navbarAvatarImg" class="nav-profile-pic" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="profile">
                         {% else %}
                             <div id="navbarAvatarLetter" class="nav-profile-pic" style="width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; border: 2px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
