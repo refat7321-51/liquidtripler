@@ -114,7 +114,7 @@ def ensure_badges_seeded():
         ('Point Millionaire', 'total_score_threshold', 500, 'Earn 500 total points', 'fas fa-coins'),
         ('Resource Hunter', 'resource_download', 5, 'Download 5 resources', 'fas fa-book-open'),
         ('Looser', 'total_tab_switches', 5, '5 tab switch warnings', 'fas fa-ghost'),
-        ('Mastermind', 'high_score', 3, '100% in 3 consecutive quizzes', 'fas fa-brain'),
+        ('Mastermind', 'high_score', 6, '100% in 6 consecutive quizzes', 'fas fa-brain'),
     ]
     for name, req_type, req_val, desc, icon in badges:
         badge_obj, created = Badge.objects.get_or_create(
@@ -179,7 +179,7 @@ def get_badge_data(user):
             percent = 100 if my_rank == badge.requirement_value else 0
         elif badge.requirement_type == 'high_score' or badge.requirement_type == 'perfect_score_count':
             current_val = streak
-            target_val = 3
+            target_val = badge.requirement_value
 
         elif badge.requirement_type == 'total_tab_switches' or badge.requirement_type == 'warning_count':
             from django.db.models import Sum
