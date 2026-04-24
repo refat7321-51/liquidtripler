@@ -407,11 +407,19 @@ def student_profile(request):
 
     # --- Auto-Seed Badges (Runs once to ensure badges exist) ---
     from .models import Badge
-    if Badge.objects.count() == 0:
+    if Badge.objects.count() <= 4:  # If only initial ones exist, add more
         Badge.objects.get_or_create(name='Quiz Master', description='Complete 5 quizzes', requirement_type='quiz_count', requirement_value=5, icon_class='fas fa-graduation-cap')
         Badge.objects.get_or_create(name='Top Ranker', description='Reach Rank 1', requirement_type='leaderboard_rank', requirement_value=1, icon_class='fas fa-crown')
-        Badge.objects.get_or_create(name='Point Millionaire', description='Earn 1000 total points', requirement_type='total_score_threshold', requirement_value=1000, icon_class='fas fa-coins')
+        Badge.objects.get_or_create(name='Point Millionaire', description='Earn 500 total points', requirement_type='total_score_threshold', requirement_value=500, icon_class='fas fa-coins')
         Badge.objects.get_or_create(name='Resource Hunter', description='Download 5 resources', requirement_type='resource_download', requirement_value=5, icon_class='fas fa-book')
+        
+        # New Badges
+        Badge.objects.get_or_create(name='Looser', description='Caught switching tabs 5 times', requirement_type='warning_count', requirement_value=5, icon_class='fas fa-ghost')
+        Badge.objects.get_or_create(name='Silver Medalist', description='Reach Rank 2', requirement_type='leaderboard_rank', requirement_value=2, icon_class='fas fa-medal')
+        Badge.objects.get_or_create(name='Bronze Medalist', description='Reach Rank 3', requirement_type='leaderboard_rank', requirement_value=3, icon_class='fas fa-award')
+        Badge.objects.get_or_create(name='Perfect 100', description='Get 100% in any quiz', requirement_type='perfect_score_count', requirement_value=1, icon_class='fas fa-star')
+        Badge.objects.get_or_create(name='Consistency King', description='Attend 10 days in a row', requirement_type='attendance_streak', requirement_value=10, icon_class='fas fa-calendar-check')
+        Badge.objects.get_or_create(name='Early Bird', description='Submit assignment within 1 hour', requirement_type='early_submission', requirement_value=1, icon_class='fas fa-bolt')
 
     if request.method == 'POST':
         full_name = request.POST.get('full_name', '').strip()
@@ -509,36 +517,34 @@ def student_profile(request):
         elif badge.requirement_type == 'total_score_threshold':
             current_val = total_marks
         elif badge.requirement_type == 'leaderboard_rank':
-            # For rank, lower is better. We'll show progress towards target rank.
             current_val = my_rank if my_rank else 0
-            # Target is usually 1, 3, or 5. If my_rank <= target, it's 100%.
-        elif badge.requirement_type == 'high_score':
-            # Check if any full score exists
-            full_score_exists = StudentAttempt.objects.filter(
+            percent = 100 if (my_rank and my_rank <= target_val) else (20 if my_rank else 0)
+        elif badge.requirement_type == 'perfect_score_count' or badge.requirement_type == 'high_score':
+            current_val = StudentAttempt.objects.filter(
                 student=request.user, is_submitted=True
-            ).extra(where=["score = total_questions AND total_questions > 0"]).exists()
-            current_val = 1 if full_score_exists else 0
-            target_val = 1
+            ).extra(where=["score = total_questions AND total_questions > 0"]).count()
+        elif badge.requirement_type == 'warning_count':
+            current_val = WarningLog.objects.filter(attempt__student=request.user, warning_type='tab_switch').count()
         else:
-            # For others, if earned show 1/1, else 0/1
             current_val = 1 if is_earned else 0
             target_val = 1
 
-        # Calculate percentage (capped at 100)
-        if badge.requirement_type == 'leaderboard_rank':
-            percent = 100 if (my_rank and my_rank <= target_val) else (20 if my_rank else 0)
-        else:
+        if badge.requirement_type != 'leaderboard_rank':
             percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
             
         badge_progress.append({
             'badge': badge,
-            'is_earned': is_earned,
+            'is_earned': is_earned or percent >= 100,
             'current_val': current_val,
             'target_val': target_val,
             'percent': percent
         })
 
+    # Sort: Earned badges first
+    badge_progress.sort(key=lambda x: x['is_earned'], reverse=True)
+
     context = {
+
         'student': request.user,
         'profile': profile,
         'attempts': attempts,
@@ -1816,10 +1822,55 @@ def admin_student_progress(request, user_id):
     # Calculate Total Points for this student
     student_total_score = next((x['total_score'] for x in rank_list if x['student_id'] == target_user.id), 0)
 
-    # Earned Badges
-    earned_badges = EarnedBadge.objects.filter(user=target_user).select_related('badge')
+    # --- Badge Progress Tracking ---
+    from .models import Badge, EarnedBadge, ActivityLog, WarningLog
+    all_badges = Badge.objects.all()
+    earned_badge_ids = set(earned_badges.values_list('badge_id', flat=True))
+    
+    badge_progress = []
+    q_count = attempts.count()
+    res_count = ActivityLog.objects.filter(user=target_user, action='Downloaded Resource').count()
+    
+    for badge in all_badges:
+        is_earned = badge.id in earned_badge_ids
+        current_val = 0
+        target_val = badge.requirement_value
+        
+        if badge.requirement_type == 'quiz_count':
+            current_val = q_count
+        elif badge.requirement_type == 'resource_download':
+            current_val = res_count
+        elif badge.requirement_type == 'total_score_threshold':
+            current_val = student_total_score
+        elif badge.requirement_type == 'leaderboard_rank':
+            current_val = my_rank if my_rank else 0
+            percent = 100 if (my_rank and my_rank <= target_val) else (20 if my_rank else 0)
+        elif badge.requirement_type == 'perfect_score_count' or badge.requirement_type == 'high_score':
+            current_val = StudentAttempt.objects.filter(
+                student=target_user, is_submitted=True
+            ).extra(where=["score = total_questions AND total_questions > 0"]).count()
+        elif badge.requirement_type == 'warning_count':
+            current_val = WarningLog.objects.filter(attempt__student=target_user, warning_type='tab_switch').count()
+        else:
+            current_val = 1 if is_earned else 0
+            target_val = 1
+
+        if badge.requirement_type != 'leaderboard_rank':
+            percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
+            
+        badge_progress.append({
+            'badge': badge,
+            'is_earned': is_earned or percent >= 100,
+            'current_val': current_val,
+            'target_val': target_val,
+            'percent': percent
+        })
+
+    # Sort: Earned badges first
+    badge_progress.sort(key=lambda x: x['is_earned'], reverse=True)
 
     context = {
+
         'target_user': target_user,
         'profile': profile,
         'my_rank': my_rank,
@@ -1827,7 +1878,9 @@ def admin_student_progress(request, user_id):
         'submissions': submissions,
         'total_marks': student_total_score,
         'earned_badges': earned_badges,
+        'badge_progress': badge_progress,
     }
+
     return render(request, 'admin_student_progress.html', context)
 
 
