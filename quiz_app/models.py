@@ -443,7 +443,7 @@ def auto_announce_resource(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Quiz)
 def auto_announce_quiz(sender, instance, created, **kwargs):
-    if created or (instance.is_published and not Notice.objects.filter(title__icontains=instance.title, title__icontains="Quiz").exists()):
+    if created or (instance.is_published and not Notice.objects.filter(title__icontains=f"Quiz: {instance.title}").exists()):
         action = "created" if created else "published"
         if instance.is_published:
             from django.urls import reverse
