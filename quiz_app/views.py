@@ -403,6 +403,34 @@ def student_password_reset_verify(request):
     return render(request, 'student_password_reset_verify.html', {'email': email})
 
 
+def resend_password_reset_otp(request):
+    email = request.session.get('reset_email')
+    if not email:
+        return redirect('student_password_reset')
+        
+    otp = str(random.randint(100000, 999999))
+    request.session['reset_otp'] = otp
+    
+    # Send HTML Mail
+    subject = f"Password Reset OTP (New) - {otp}"
+    from django.template.loader import render_to_string
+    html_message = render_to_string('emails/password_reset_email.html', {
+        'otp': otp
+    })
+    
+    send_email_async(
+        subject,
+        f"Your new password reset OTP is {otp}",
+        [email],
+        html_message=html_message
+    )
+    
+    from django.contrib import messages
+    messages.success(request, f"A new OTP has been sent to {email}")
+    return redirect('student_password_reset_verify')
+
+
+
 def student_password_reset_confirm(request):
     email = request.session.get('reset_email')
     if not email or not request.session.get('otp_verified'):

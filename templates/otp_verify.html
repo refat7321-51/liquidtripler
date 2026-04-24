@@ -39,9 +39,22 @@
             </button>
         </form>
 
-        <div class="auth-footer">
-            Didn't receive the code? <a href="{% url 'resend_otp' %}" class="resend-link">Resend OTP</a>
+        <div class="auth-footer" id="resendContainer">
+            Didn't receive the code? 
+            <a href="{% url 'resend_otp' %}" class="resend-link" id="resendLink" onclick="showLoading()">Resend OTP</a>
+            <div id="loadingText" style="display:none; color: #3b82f6; font-weight: 700; margin-top: 5px;">
+                <i class="fas fa-spinner fa-spin"></i> Sending new code...
+            </div>
         </div>
+
+        <script>
+            function showLoading() {
+                document.getElementById('resendLink').style.pointerEvents = 'none';
+                document.getElementById('resendLink').style.opacity = '0.5';
+                document.getElementById('loadingText').style.display = 'block';
+            }
+        </script>
+
         
         <div class="back-link">
             <a href="{% url 'student_register' %}">

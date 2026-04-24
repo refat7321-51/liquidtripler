@@ -12,7 +12,9 @@ urlpatterns = [
     path('profile/', views.student_profile, name='student_profile'),
     path('password-reset/', views.student_password_reset, name='student_password_reset'),
     path('password-reset/verify/', views.student_password_reset_verify, name='student_password_reset_verify'),
+    path('password-reset/resend-otp/', views.resend_password_reset_otp, name='resend_password_reset_otp'),
     path('password-reset/confirm/', views.student_password_reset_confirm, name='student_password_reset_confirm'),
+
 
     # ── Admin Auth ────────────────────────────────────────────
     path('admin-login/', views.admin_login, name='admin_login'),
