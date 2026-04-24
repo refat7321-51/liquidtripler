@@ -391,6 +391,26 @@ def student_password_reset_confirm(request):
     return render(request, 'student_password_reset_confirm.html')
 
 
+def resend_password_reset_otp(request):
+    reg_data = request.session.get('reset_email')
+    if not reg_data:
+        return redirect('student_password_reset')
+
+    email = request.session.get('reset_email')
+    otp = str(random.randint(100000, 999999))
+    request.session['reset_otp'] = otp
+
+    subject = f"Password Reset OTP - {otp}"
+    html_message = render_to_string('emails/password_reset_email.html', {'otp': otp})
+    send_email_async(
+        subject,
+        f"Your new password reset OTP is {otp}",
+        [email],
+        html_message=html_message
+    )
+    return redirect('student_password_reset_verify')
+
+
 def student_login(request):
     if request.user.is_authenticated and not request.user.is_staff:
         return redirect('home')
