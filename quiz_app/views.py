@@ -174,6 +174,25 @@ def check_badges(user):
         if badge and streak >= badge.requirement_value:
             EarnedBadge.objects.get_or_create(user=user, badge=badge)
 
+    # 10. Early Bird (requirement_type='early_bird_quiz', value=5)
+    # Count quizzes submitted within 1 hour of quiz being published/created
+    early_bird_badge = Badge.objects.filter(requirement_type='early_bird_quiz').first()
+    if early_bird_badge:
+        submitted_attempts = StudentAttempt.objects.filter(
+            student=user, is_submitted=True
+        ).select_related('quiz')
+        early_count = 0
+        for attempt in submitted_attempts:
+            quiz = attempt.quiz
+            # Use quiz published time (created_at as fallback)
+            publish_time = quiz.created_at
+            if attempt.submitted_at and publish_time:
+                diff = attempt.submitted_at - publish_time
+                if 0 <= diff.total_seconds() <= 3600:  # within 1 hour
+                    early_count += 1
+        if early_count >= early_bird_badge.requirement_value:
+            EarnedBadge.objects.get_or_create(user=user, badge=early_bird_badge)
+
 
 # ==================== STUDENT AUTH ====================
 
@@ -548,6 +567,20 @@ def student_profile(request):
                 elif att.status == 'Absent':
                     break
             current_val = streak
+            target_val = badge.requirement_value
+        elif badge.requirement_type == 'early_bird_quiz':
+            # Count quizzes submitted within 1 hour of quiz being published/created
+            submitted = StudentAttempt.objects.filter(
+                student=request.user, is_submitted=True
+            ).select_related('quiz')
+            early_count = 0
+            for attempt in submitted:
+                publish_time = attempt.quiz.created_at
+                if attempt.submitted_at and publish_time:
+                    diff = attempt.submitted_at - publish_time
+                    if 0 <= diff.total_seconds() <= 3600:
+                        early_count += 1
+            current_val = early_count
             target_val = badge.requirement_value
         else:
             # For others, if earned show 1/1, else 0/1
@@ -1204,7 +1237,8 @@ def leaderboard(request):
     context = {
         'quizzes': quizzes,
         'selected_quiz': selected_quiz,
-        'leaderboard_data': leaderboard_data,
+        'top_three': leaderboard_data[:3],
+        'remaining_students': leaderboard_data[3:],
     }
     return render(request, 'leaderboard.html', context)
 

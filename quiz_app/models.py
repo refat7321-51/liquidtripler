@@ -348,6 +348,7 @@ class Badge(models.Model):
         ('consistency_streak', 'Consistent High Performer'),
         ('total_tab_switches', 'Total Tab Switches (Looser)'),
         ('attendance_streak', 'Consecutive Attendance Days'),
+        ('early_bird_quiz', 'Quiz Submitted Within 1 Hour of Publish'),
     ])
     requirement_value = models.IntegerField(default=1)
 
