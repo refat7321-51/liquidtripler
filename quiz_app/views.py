@@ -902,10 +902,19 @@ def admin_profile(request):
         profile.bio = designation # Syncing designation to bio for consistency
         profile.save()
 
-        # Update Teacher model if exists
-        if teacher_profile:
+        # Update or Create Teacher model
+        if not teacher_profile:
+            teacher_profile = Teacher.objects.create(
+                user=request.user,
+                name=request.user.get_full_name() or request.user.username,
+                email=request.user.email,
+                phone=phone_number,
+                designation=designation,
+                status=availability_status
+            )
+        else:
             teacher_profile.status = availability_status
-            teacher_profile.name = request.user.get_full_name()
+            teacher_profile.name = request.user.get_full_name() or request.user.username
             teacher_profile.email = request.user.email
             teacher_profile.phone = phone_number
             teacher_profile.designation = designation
@@ -1921,15 +1930,54 @@ def admin_student_progress(request, user_id):
     rank_list.sort(key=lambda x: -x['total_score'])
     my_rank = next((i for i, x in enumerate(rank_list, 1) if x['student_id'] == target_user.id), None)
     
+    # Calculate badges for this student
+    check_badges(target_user) # Ensure badges are updated in DB
+    
     # Detailed Data
     attempts = StudentAttempt.objects.filter(student=target_user, is_submitted=True).order_by('-submitted_at')
     submissions = AssignmentSubmission.objects.filter(student=target_user).select_related('assignment').order_by('-submitted_at')
     
-    # Calculate Total Points for this student
+    # Calculate Total Points for this student (using the rank_list already calculated above)
     student_total_score = next((x['total_score'] for x in rank_list if x['student_id'] == target_user.id), 0)
 
-    # Earned Badges
-    earned_badges = EarnedBadge.objects.filter(user=target_user).select_related('badge')
+    # --- Badge Progress System (Matches Student Profile) ---
+    all_badges = Badge.objects.all().order_by('id')
+    earned_badge_ids = EarnedBadge.objects.filter(user=target_user).values_list('badge_id', flat=True)
+    
+    badge_progress = []
+    for badge in all_badges:
+        is_earned = badge.id in earned_badge_ids
+        target_val = badge.requirement_value
+        
+        # Dynamic calculation for progress display
+        current_val = 0
+        if badge.requirement_type == 'quiz_count':
+            current_val = attempts.count()
+        elif badge.requirement_type == 'total_score':
+            current_val = student_total_score
+        elif badge.requirement_type == 'leaderboard_rank':
+            current_val = my_rank if my_rank else 0
+            if my_rank and my_rank <= target_val:
+                is_earned = True
+        elif badge.requirement_type == 'high_score':
+            current_val = StudentAttempt.objects.filter(student=target_user, is_submitted=True).aggregate(max_score=Max('score'))['max_score'] or 0
+
+        # Calculate percentage
+        percent = 0
+        if target_val > 0:
+            if badge.requirement_type == 'leaderboard_rank':
+                if is_earned: percent = 100
+                elif my_rank: percent = max(0, min(100, (11 - my_rank) * 10))
+                else: percent = 0
+            else:
+                percent = min(100, (current_val / target_val) * 100)
+        
+        badge_progress.append({
+            'badge': badge,
+            'is_earned': is_earned,
+            'current_val': current_val,
+            'percent': int(percent)
+        })
 
     context = {
         'target_user': target_user,
@@ -1938,7 +1986,7 @@ def admin_student_progress(request, user_id):
         'attempts': attempts,
         'submissions': submissions,
         'total_marks': student_total_score,
-        'earned_badges': earned_badges,
+        'badge_progress': badge_progress,
     }
     return render(request, 'admin_student_progress.html', context)
 
