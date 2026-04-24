@@ -130,10 +130,15 @@ def check_badges(user):
         if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
 
     # 5. Leaderboard Rank Badges (requirement_type='leaderboard_rank')
+    # Exclusive award: Only award the medal matching the current rank to avoid triple medals
     rank_badges = Badge.objects.filter(requirement_type='leaderboard_rank')
     for b in rank_badges:
-        if rank > 0 and rank <= b.requirement_value:
+        if rank == b.requirement_value:
             EarnedBadge.objects.get_or_create(user=user, badge=b)
+        else:
+            # Optionally remove other medals if the user dropped rank
+            # For now we keep old medals as 'achievements', but prevent awarding new ones incorrectly
+            pass
 
     # 6. No Penalty Hero (requirement_type='no_penalty_full_score', value=0)
     no_penalty_full = StudentAttempt.objects.filter(student=user, is_submitted=True, tab_switch_count=0)
@@ -623,6 +628,8 @@ def student_profile(request):
             current_val = total_marks
         elif badge.requirement_type == 'leaderboard_rank':
             current_val = my_rank if my_rank else 0
+            # Exclusive check: only marked as earned if it's their exact rank
+            # or if they have the higher medal already
             if my_rank and my_rank <= target_val:
                 is_earned = True
         elif badge.requirement_type == 'high_score':
@@ -662,9 +669,9 @@ def student_profile(request):
         if badge.requirement_type == 'leaderboard_rank':
             if is_earned:
                 percent = 100
-            elif my_rank:
+            elif my_rank and my_rank > target_val:
+                # Progress towards a higher rank (e.g. Rank 10 -> Rank 3)
                 percent = int((target_val / my_rank) * 100)
-                percent = min(100, max(0, percent))
             else:
                 percent = 0
         else:
@@ -1487,8 +1494,28 @@ def student_dashboard(request):
     
     total_score, rank = get_user_ranking_stats(request.user)
     
+    # Filter leaderboard rank badges to show only the most relevant one
+    rank_badges = [b for b in all_badges if b.requirement_type == 'leaderboard_rank']
+    other_badges = [b for b in all_badges if b.requirement_type != 'leaderboard_rank']
+    
+    selected_rank_badge = None
+    if rank_badges:
+        rank_badges.sort(key=lambda b: b.requirement_value)
+        if rank and rank <= 3:
+            # Show the specific medal for their rank
+            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == rank), None)
+            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
+        else:
+            # Not in top 3, show the Bronze Medal as a goal
+            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == 3), None)
+            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
+            
+    all_badges_to_process = other_badges
+    if selected_rank_badge:
+        all_badges_to_process.append(selected_rank_badge)
+
     badges_data = []
-    for badge in all_badges:
+    for badge in all_badges_to_process:
         is_earned = badge.id in earned_badge_ids
         progress = 0
         status_text = ""
@@ -1509,10 +1536,18 @@ def student_dashboard(request):
                 progress = min(round((count / badge.requirement_value) * 100), 99)
                 status_text = f"{count}/{badge.requirement_value} Resources"
             elif badge.requirement_type == 'leaderboard_rank':
-                # Rank progress is tricky, let's just show current rank
-                # If rank is 10 and requirement is 3, show 30% maybe? No, let's just show rank.
+                # Rank progress: 100% only if they hit that EXACT rank or better
+                if rank > 0 and rank <= badge.requirement_value:
+                    if rank == badge.requirement_value:
+                        progress = 100
+                    else:
+                        # If they are Rank 1, they 'completed' Rank 2 and 3 too, 
+                        # but we want to show Top Ranker as the primary.
+                        # For display, we'll mark them 100 if earned, otherwise 0.
+                        progress = 100
+                else:
+                    progress = 0
                 status_text = f"Current Rank: #{rank}"
-                progress = 100 if rank <= badge.requirement_value else 0
             elif badge.requirement_type == 'consistency_streak':
                 last_3 = StudentAttempt.objects.filter(student=request.user, is_submitted=True).order_by('-submitted_at')[:3]
                 count = 0
@@ -2014,8 +2049,26 @@ def admin_student_progress(request, user_id):
     all_badges = Badge.objects.all().order_by('id')
     earned_badge_ids = EarnedBadge.objects.filter(user=target_user).values_list('badge_id', flat=True)
     
+    # Filter leaderboard rank badges to show only the most relevant one
+    rank_badges = [b for b in all_badges if b.requirement_type == 'leaderboard_rank']
+    other_badges = [b for b in all_badges if b.requirement_type != 'leaderboard_rank']
+    
+    selected_rank_badge = None
+    if rank_badges:
+        rank_badges.sort(key=lambda b: b.requirement_value)
+        if my_rank and my_rank <= 3:
+            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == my_rank), None)
+            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
+        else:
+            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == 3), None)
+            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
+            
+    all_badges_to_process = other_badges
+    if selected_rank_badge:
+        all_badges_to_process.append(selected_rank_badge)
+
     badge_progress = []
-    for badge in all_badges:
+    for badge in all_badges_to_process:
         is_earned = badge.id in earned_badge_ids
         target_val = badge.requirement_value
         
@@ -2037,7 +2090,8 @@ def admin_student_progress(request, user_id):
         if target_val > 0:
             if badge.requirement_type == 'leaderboard_rank':
                 if is_earned: percent = 100
-                elif my_rank: percent = max(0, min(100, (11 - my_rank) * 10))
+                elif my_rank and my_rank > target_val:
+                    percent = int((target_val / my_rank) * 100)
                 else: percent = 0
             else:
                 percent = min(100, (current_val / target_val) * 100)
