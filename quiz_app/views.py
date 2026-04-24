@@ -262,6 +262,8 @@ def student_register(request):
     return render(request, 'student_register.html')
 
 
+from django.db import transaction
+
 def verify_otp(request):
     reg_data = request.session.get('reg_data')
     correct_otp = request.session.get('reg_otp')
@@ -293,35 +295,38 @@ def verify_otp(request):
         # 2. Verify OTP
         if entered_otp == correct_otp:
             try:
-                # Create User
-                full_name = reg_data['full_name']
-                email = reg_data['email']
-                password = reg_data['password']
-                parts = full_name.split()
-                
-                # Check again if user exists to prevent Race Condition
-                if User.objects.filter(username=email).exists():
-                    messages.error(request, "An account with this email already exists.")
-                    return redirect('student_login')
+                # Create User and Profile within a transaction
+                with transaction.atomic():
+                    full_name = reg_data['full_name']
+                    email = reg_data['email']
+                    password = reg_data['password']
+                    parts = full_name.split()
+                    
+                    # Check again if user exists to prevent Race Condition
+                    if User.objects.filter(username=email).exists():
+                        messages.error(request, "An account with this email already exists.")
+                        return redirect('student_login')
 
-                user = User.objects.create_user(
-                    username=email,
-                    email=email,
-                    password=password,
-                    first_name=parts[0],
-                    last_name=' '.join(parts[1:]) if len(parts) > 1 else '',
-                )
-                StudentProfile.objects.create(user=user)
-                
-                # Clear session
-                for key in ['reg_data', 'reg_otp', 'otp_expiry']:
-                    if key in request.session:
-                        del request.session[key]
-                
-                login(request, user)
-                messages.success(request, f"Welcome {full_name}! Your account has been created.")
-                return redirect('home')
+                    user = User.objects.create_user(
+                        username=email,
+                        email=email,
+                        password=password,
+                        first_name=parts[0],
+                        last_name=' '.join(parts[1:]) if len(parts) > 1 else '',
+                    )
+                    # This will trigger StudentProfile.save() and its student_id logic
+                    StudentProfile.objects.create(user=user)
+                    
+                    # Clear session
+                    for key in ['reg_data', 'reg_otp', 'otp_expiry']:
+                        if key in request.session:
+                            del request.session[key]
+                    
+                    login(request, user)
+                    messages.success(request, f"Welcome {full_name}! Your account has been created.")
+                    return redirect('home')
             except Exception as e:
+                # Any error (like IntegrityError) will trigger rollback of User creation
                 return render(request, 'otp_verify.html', {
                     'error': f"Error creating account: {str(e)}", 
                     'email': reg_data['email']
