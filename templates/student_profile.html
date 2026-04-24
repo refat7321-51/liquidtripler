@@ -108,7 +108,7 @@
 
 
       <!-- Achievements & Progress Tracking Section -->
-    <div class="achievements-section" style="background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 4px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; margin-bottom: 2.5rem;">
+    <div class="achievements-section" style="background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 4px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; margin-bottom: 2.5rem; overflow: hidden;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h3 style="font-weight: 800; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
                 <i class="fas fa-award" style="color: #f59e0b;"></i> Achievements & Milestones
@@ -120,36 +120,38 @@
             {% endif %}
         </div>
         
-        <div id="badgeGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+        <div id="badgeGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; width: 100%;">
             {% for item in badge_progress %}
             <div class="achievement-card badge-item {% if forloop.counter > 4 %}hidden-badge{% endif %}" 
-                 style="padding: 1.25rem; background: #f8fafc; border-radius: 1.25rem; border: 1px solid #f1f5f9; transition: all 0.3s ease; position: relative; display: flex; flex-direction: column; gap: 0.75rem; 
-                        {% if not item.is_earned %}opacity: 0.7; filter: grayscale(50%);{% endif %} 
-                        {% if item.is_earned %}border: 2px solid #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); background: white; animation: badge-glow-profile 3s infinite ease-in-out;{% endif %}">
+                 style="padding: 1.5rem; background: #f8fafc; border-radius: 1.25rem; border: 1px solid #f1f5f9; transition: all 0.3s ease; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; box-sizing: border-box; width: 100%;
+                        {% if not item.is_earned %}opacity: 0.8; filter: grayscale(30%);{% endif %} 
+                        {% if item.is_earned %}border: 2px solid #fbbf24; box-shadow: 0 0 25px rgba(251, 191, 36, 0.2); background: white; animation: badge-glow-profile 3s infinite ease-in-out; z-index: 1;{% endif %}">
                 
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <div class="badge-icon-wrapper" 
-                         style="width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.06); flex-shrink: 0;
-                                background: {% if item.is_earned %}linear-gradient(135deg, #fceabb 0%, #f8b500 100%){% else %}#e2e8f0{% endif %};
-                                color: {% if item.is_earned %}white{% else %}#94a3b8{% endif %};">
-                        <i class="{{ item.badge.icon_class }}"></i>
-                    </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <h4 style="font-weight: 800; color: #1e293b; font-size: 0.85rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ item.badge.name }}</h4>
-                        <p style="font-size: 0.7rem; color: #64748b; margin-top: 2px; line-height: 1.3;">{{ item.badge.description }}</p>
-                    </div>
-                    {% if item.is_earned %}
-                    <i class="fas fa-check-circle" style="color: #fbbf24; font-size: 1.1rem;"></i>
-                    {% endif %}
+                <!-- Badge Icon -->
+                <div class="badge-icon-wrapper" 
+                     style="width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; border: 3px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.08); flex-shrink: 0;
+                            background: {% if item.is_earned %}linear-gradient(135deg, #fceabb 0%, #f8b500 100%){% else %}#e2e8f0{% endif %};
+                            color: {% if item.is_earned %}white{% else %}#94a3b8{% endif %};">
+                    <i class="{{ item.badge.icon_class }}"></i>
                 </div>
 
-                <!-- Progress -->
-                <div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 800; color: #475569; margin-bottom: 5px;">
-                        <span>{% if item.is_earned %}Unlocked!{% else %}Progress{% endif %}</span>
-                        <span>{{ item.current_val }} / {{ item.target_val }}</span>
+                <!-- Info -->
+                <div style="width: 100%;">
+                    <h4 style="font-weight: 800; color: #1e293b; font-size: 1.05rem; margin: 0 0 6px;">{{ item.badge.name }}</h4>
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 0; line-height: 1.4; font-weight: 600;">{{ item.badge.description }}</p>
+                </div>
+
+                <!-- Progress Section -->
+                <div style="width: 100%; margin-top: auto;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 800; color: #475569; margin-bottom: 8px;">
+                        <span style="color: #3b82f6;">Target: {{ item.target_val }}</span>
+                        {% if not item.is_earned %}
+                        <span style="color: #f59e0b;">{{ item.target_val|add:item.current_val_neg }} left</span>
+                        {% else %}
+                        <span style="color: #10b981;"><i class="fas fa-check-circle"></i> Completed</span>
+                        {% endif %}
                     </div>
-                    <div style="height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                    <div style="height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden; width: 100%;">
                         <div style="height: 100%; width: {{ item.percent }}%; 
                                     background: {% if item.is_earned %}linear-gradient(90deg, #f59e0b, #fbbf24){% else %}linear-gradient(90deg, #3b82f6, #60a5fa){% endif %}; 
                                     border-radius: 10px; transition: width 1s ease-in-out;">
