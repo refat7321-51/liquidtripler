@@ -1202,10 +1202,15 @@ def quiz_result(request, attempt_id):
                 'is_correct': False,
             })
     percentage = (attempt.score / attempt.total_questions * 100) if attempt.total_questions > 0 else 0
+    
+    # Check if any warnings exist for this attempt
+    has_warning = attempt.tab_switch_count > 0 or attempt.is_disqualified
+
     context = {
         'attempt': attempt,
         'questions_with_answers': questions_with_answers,
         'percentage': percentage,
+        'has_warning': has_warning,
     }
     for key in ['attempt_id', 'session_id']:
         if key in request.session:
