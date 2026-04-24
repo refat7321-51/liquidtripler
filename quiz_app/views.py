@@ -493,50 +493,11 @@ def student_profile(request):
         student=request.user, is_submitted=True
     ).order_by('-submitted_at')
 
-    # --- Unified Ranking System (Matches Leaderboard) ---
-    all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
+    # --- Unified Ranking and Scoring System ---
+    total_marks, my_rank = get_user_ranking_stats(request.user)
+    total_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).count()
 
-    temp = []
-    from django.db.models import Max
-    for s in all_students:
-        # 1. Quiz Score (Best per quiz)
-        s_attempts = StudentAttempt.objects.filter(student=s, is_submitted=True)
-        q_score = sum(item['max_score'] for item in s_attempts.values('quiz').annotate(max_score=Max('score')))
-        # 2. Attendance Score
-        att_count = Attendance.objects.filter(student=s.student_profile, status='Present').count()
-        att_score = (att_count * 5)
-        # 3. Assignment Score (Only include if manually published)
-        ass_score = sum(sub.marks for sub in AssignmentSubmission.objects.filter(
-            student=s, 
-            is_graded=True,
-            is_published=True
-        ))
-        # 4. Bonus Marks
-        bonus = s.student_profile.bonus_marks
-        
-        temp.append({'student_id': s.id, 'total_score': q_score + att_score + ass_score + bonus})
-
-    temp.sort(key=lambda x: -x['total_score'])
-    my_rank = next((i for i, x in enumerate(temp, 1) if x['student_id'] == request.user.id), None)
-
-    # --- Unified Raw Mark Scoring System ---
     att_count_self = Attendance.objects.filter(student=profile, status='Present').count()
-    attendance_score = att_count_self * 5
-    
-    # Calculate Quiz Score (Sum of highest score for each unique quiz to match leaderboard)
-    from django.db.models import Max
-    best_quiz_scores = StudentAttempt.objects.filter(
-        student=request.user, is_submitted=True
-    ).values('quiz').annotate(max_score=Max('score'))
-    quiz_score = sum(item['max_score'] for item in best_quiz_scores)
-    
-    assignment_score = sum(s.marks for s in AssignmentSubmission.objects.filter(
-        student=request.user, 
-        is_graded=True,
-        is_published=True
-    ))
-    
-    total_marks = attendance_score + quiz_score + assignment_score + profile.bonus_marks
 
     badge_progress = get_badge_data(request.user)
 
@@ -545,7 +506,7 @@ def student_profile(request):
         'profile': profile,
         'attempts': attempts,
         'my_rank': my_rank,
-        'total_students': len(temp),
+        'total_students': total_students,
         'total_marks': total_marks,
         'badge_progress': badge_progress,
         'attendance_count': att_count_self,
