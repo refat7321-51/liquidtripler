@@ -347,6 +347,7 @@ class Badge(models.Model):
         ('no_penalty_full_score', 'Full Score with No Penalty'),
         ('consistency_streak', 'Consistent High Performer'),
         ('total_tab_switches', 'Total Tab Switches (Looser)'),
+        ('attendance_streak', 'Consecutive Attendance Days'),
     ])
     requirement_value = models.IntegerField(default=1)
 
