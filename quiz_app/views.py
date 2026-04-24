@@ -2003,7 +2003,7 @@ def admin_student_progress(request, user_id):
     return render(request, 'admin_student_progress.html', context)
 
 
-@login_required
+@login_required(login_url='admin_login')
 def admin_adjust_bonus_marks(request, user_id):
     if not request.user.is_staff:
         return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
@@ -2013,9 +2013,13 @@ def admin_adjust_bonus_marks(request, user_id):
         profile, _ = StudentProfile.objects.get_or_create(user=target_user)
         
         try:
+            import json
             data = json.loads(request.body)
             action = data.get('action')
-            amount = int(data.get('amount', 0))
+            amount_val = data.get('amount', 0)
+            
+            # Ensure amount is an integer even if string is sent
+            amount = int(amount_val) if amount_val else 0
             
             if action == 'add':
                 profile.bonus_marks += amount
@@ -2023,7 +2027,11 @@ def admin_adjust_bonus_marks(request, user_id):
                 profile.bonus_marks -= amount
             
             profile.save()
-            return JsonResponse({'success': True, 'new_bonus': profile.bonus_marks})
+            return JsonResponse({
+                'success': True, 
+                'new_bonus': profile.bonus_marks,
+                'message': f'Bonus marks updated to {profile.bonus_marks}'
+            })
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
     

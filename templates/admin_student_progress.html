@@ -243,9 +243,15 @@
 {% block extra_js %}
 <script>
 function adjustBonus(action) {
-    const amount = document.getElementById('bonusAmount').value;
+    const amountInput = document.getElementById('bonusAmount');
+    const amount = parseInt(amountInput.value) || 0;
     const msg = document.getElementById('bonusMsg');
     
+    if (amount <= 0 && action !== 'set') {
+        msg.innerHTML = '<span style="color: #ef4444;">Please enter a valid amount.</span>';
+        return;
+    }
+
     msg.innerHTML = '<span style="color: #64748b;">Updating...</span>';
     
     fetch('{% url "admin_adjust_bonus_marks" target_user.id %}', {
