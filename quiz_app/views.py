@@ -656,6 +656,8 @@ def admin_login(request):
         if password == '730323' and username in admin_usernames:
             user = User.objects.filter(username=username).first()
             if user and user.is_staff:
+                # Explicitly set the backend for manual login
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(request, user)
                 return redirect('admin_dashboard')
 
