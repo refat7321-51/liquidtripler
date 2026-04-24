@@ -378,21 +378,28 @@
     .ad-hero-section p { font-size: 0.85rem !important; }
     
     .ad-tabs { 
-        padding: 0.25rem;
-        gap: 4px;
-        flex-wrap: wrap; /* allow buttons to wrap into 2x2 grid */
-        overflow-x: visible;
+        padding: 0.5rem;
+        gap: 10px;
+        flex-wrap: wrap; 
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        box-shadow: none;
     }
     
     .ad-tab-btn { 
-        flex: 1 1 calc(50% - 4px); /* 2 per row */
-        min-width: 0;
-        padding: 0.6rem 0.5rem; 
-        font-size: 0.75rem; 
-        border-radius: 0.6rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        flex: 1 1 calc(50% - 10px);
+        background: white;
+        border: 1px solid #e2e8f0;
+        padding: 0.8rem 0.5rem; 
+        font-size: 0.8rem; 
+        border-radius: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    
+    .ad-tab-btn.active {
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        color: white;
+        border: none;
     }
     
     .ad-panel-title { font-size: 0.95rem; }
@@ -401,6 +408,17 @@
     .ad-tbl td { font-size: 0.85rem; }
     .ad-acts { gap: 4px; }
     .ad-act { padding: 4px 10px; font-size: 0.72rem; }
+    
+    /* Ensure panels are visible and have proper spacing on mobile */
+    .ad-card {
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    
+    .ad-mobile-cards {
+        display: flex !important;
+        padding: 1rem;
+    }
 }
 
 @media(max-width:480px){

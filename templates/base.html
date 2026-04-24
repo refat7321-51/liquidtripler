@@ -450,11 +450,13 @@
                     </li>
                     {% endif %}
                     
+                    {% if not user.is_staff %}
                     <li class="sidebar-item" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; margin-bottom: 2rem;">
                         <a href="/logout/" id="logoutBtn" class="sidebar-link" style="color: #fca5a5 !important;">
                             <div><i class="fas fa-power-off"></i> <span>Logout Now</span></div>
                         </a>
                     </li>
+                    {% endif %}
                 {% else %}
                     <li class="sidebar-item">
                         <a href="/login/" class="sidebar-link">
