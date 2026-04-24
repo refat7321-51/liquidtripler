@@ -1192,12 +1192,18 @@ def leaderboard(request):
             item['rank'] = rank
             leaderboard_data.append(item)
 
+    top_three = leaderboard_data[:3]
+    remaining_students = leaderboard_data[3:]
+
     context = {
         'quizzes': quizzes,
         'selected_quiz': selected_quiz,
         'leaderboard_data': leaderboard_data,
+        'top_three': top_three,
+        'remaining_students': remaining_students,
     }
     return render(request, 'leaderboard.html', context)
+
 
 
 @login_required(login_url='admin_login')

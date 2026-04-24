@@ -52,17 +52,14 @@
            onmouseout="this.style.background='{% if selected_quiz.id == quiz.id %}#06b6d4{% else %}transparent{% endif %}'">
             {{ quiz.title }}
         </a>
-        {% endfor %}
-    </div>
-
-    {% if leaderboard_data %}
+        {% endfor %}    {% if top_three %}
         
         <!-- ── FEATURED PODIUM (Top 3) ── -->
         <div style="display:flex;justify-content:center;align-items:flex-end;gap:1rem;margin-bottom:4rem;padding-top:2rem;">
             
             <!-- 2nd Place -->
-            {% if leaderboard_data|length >= 2 %}
-            {% with second=leaderboard_data.1 %}
+            {% if top_three|length >= 2 %}
+            {% with second=top_three.1 %}
             <div style="text-align:center;width:160px;animation:fadeInUp 0.6s ease-out 0.1s both;">
                 <div style="position:relative;display:inline-block;margin-bottom:1rem;">
                     <div style="width:80px;height:80px;border-radius:50%;padding:3px;background:white;
@@ -93,7 +90,8 @@
             {% endif %}
 
             <!-- 1st Place (Winner) -->
-            {% with first=leaderboard_data.0 %}
+            {% if top_three|length >= 1 %}
+            {% with first=top_three.0 %}
             <div style="text-align:center;width:200px;z-index:2;animation:fadeInUp 0.6s ease-out both;">
                 <div style="margin-bottom:0.5rem;font-size:1.8rem;filter:drop-shadow(0 4px 8px rgba(245,158,11,0.3));">👑</div>
                 <div style="position:relative;display:inline-block;margin-bottom:1.25rem;">
@@ -122,17 +120,11 @@
                 </div>
             </div>
             {% endwith %}
-
-            <!-- 2nd Place Placeholder (if only 1 student exists) -->
-            {% if leaderboard_data|length == 1 %}
-            <div style="width:160px;opacity:0.3;filter:grayscale(1);">
-                 <!-- Empty 2nd slot -->
-            </div>
             {% endif %}
 
             <!-- 3rd Place -->
-            {% if leaderboard_data|length >= 3 %}
-            {% with third=leaderboard_data.2 %}
+            {% if top_three|length >= 3 %}
+            {% with third=top_three.2 %}
             <div style="text-align:center;width:160px;animation:fadeInUp 0.6s ease-out 0.2s both;">
                 <div style="position:relative;display:inline-block;margin-bottom:1rem;">
                     <div style="width:80px;height:80px;border-radius:50%;padding:3px;background:white;
@@ -176,9 +168,8 @@
             <div style="text-align:right;font-weight:800;color:#94a3b8;font-size:0.75rem;text-transform:uppercase;">Score</div>
         </div>
 
-        {% if leaderboard_data %}
-            {% for item in leaderboard_data %}
-                {% if item.rank > 3 or leaderboard_data|length < 4 %}
+        {% if remaining_students %}
+            {% for item in remaining_students %}
                 <div id="{% if item.student.id == user.id %}my-rank{% endif %}"
                      style="padding:1.1rem 1.8rem;display:flex;align-items:center;gap:1.5rem;
                             {% if not forloop.last %}border-bottom:1px solid #f8fafc;{% endif %}
@@ -188,10 +179,7 @@
                     
                     <!-- Rank No -->
                     <div style="width:40px;text-align:center;">
-                        {% if item.rank == 1 %}<span style="font-size:1.2rem;">🥇</span>
-                        {% elif item.rank == 2 %}<span style="font-size:1.2rem;">🥈</span>
-                        {% elif item.rank == 3 %}<span style="font-size:1.2rem;">🥉</span>
-                        {% else %}<span style="font-weight:800;color:#f59e0b;font-size:0.95rem;">#{{ item.rank }}</span>{% endif %}
+                        <span style="font-weight:800;color:#f59e0b;font-size:0.95rem;">#{{ item.rank }}</span>
                     </div>
 
                     <!-- Profile Image -->
@@ -214,14 +202,6 @@
                                 <span style="background:#0891b2;color:white;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:99px;letter-spacing:0.5px;">ME</span>
                             {% endif %}
                          </div>
-                         {% if selected_quiz %}
-                         <div style="display:flex;align-items:center;gap:8px;margin-top:2px;">
-                            <div class="stat-pill">
-                                <i class="fas fa-history"></i> 
-                                {{ item.attempt.submitted_at|date:"d/m/Y"|default:"Not Taken" }}
-                            </div>
-                         </div>
-                         {% endif %}
                     </div>
 
                     <!-- Score -->
@@ -230,17 +210,11 @@
                         <div style="font-size:0.65rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">PTS</div>
                     </div>
                 </div>
-                {% endif %}
             {% endfor %}
-        {% else %}
-            <div style="padding:4rem 2rem;text-align:center;">
-                <div style="font-size:3rem;margin-bottom:1rem;opacity:0.2;">📭</div>
-                <h4 style="color:#64748b;font-weight:700;">No students found</h4>
-                <p style="color:#94a3b8;font-size:0.85rem;">Rankings will appear here once data is available.</p>
-            </div>
         {% endif %}
-
     </div>
+
+</div>
 
 </div>
 
