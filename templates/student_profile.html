@@ -143,20 +143,21 @@
 
                 <!-- Progress Section -->
                 <div style="width: 100%; margin-top: auto;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 800; color: #475569; margin-bottom: 8px;">
-                        <span style="color: #3b82f6;">Target: {{ item.target_val }}</span>
-                        {% if not item.is_earned %}
-                        <span style="color: #f59e0b;">{{ item.remaining }} left</span>
-                        {% else %}
-                        <span style="color: #10b981;"><i class="fas fa-check-circle"></i> Completed</span>
-                        {% endif %}
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 800; color: #475569; margin-bottom: 8px;">
+                        <span style="color: #3b82f6;">Done: {{ item.current_val }}</span>
+                        <span style="color: #64748b;">Target: {{ item.target_val }}</span>
                     </div>
-                    <div style="height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden; width: 100%;">
+                    <div style="height: 12px; background: #e2e8f0; border-radius: 10px; overflow: hidden; width: 100%;">
                         <div style="height: 100%; width: {{ item.percent }}%; 
                                     background: {% if item.is_earned %}linear-gradient(90deg, #f59e0b, #fbbf24){% else %}linear-gradient(90deg, #3b82f6, #60a5fa){% endif %}; 
-                                    border-radius: 10px; transition: width 1s ease-in-out;">
+                                    border-radius: 10px; transition: width 0.8s ease-out;">
                         </div>
                     </div>
+                    {% if not item.is_earned %}
+                    <div style="font-size: 0.7rem; color: #f59e0b; font-weight: 700; margin-top: 6px; text-align: right;">{{ item.remaining }} more to go</div>
+                    {% else %}
+                    <div style="font-size: 0.7rem; color: #10b981; font-weight: 700; margin-top: 6px; text-align: right;"><i class="fas fa-check-circle"></i> Completed</div>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
