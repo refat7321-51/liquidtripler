@@ -1447,7 +1447,7 @@ def student_dashboard(request):
         'quiz_list': quiz_list_with_status,
         'latest_notices': Notice.objects.all()[:3],
     }
-    return render(request, 'home.html', context)
+    return render(request, 'dashboard.html', context)
 
 
 
