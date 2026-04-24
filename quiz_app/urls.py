@@ -18,9 +18,12 @@ urlpatterns = [
 
     # ── Admin Auth ────────────────────────────────────────────
     path('admin-login/', views.admin_login, name='admin_login'),
+    path('admin/login/', views.admin_login),
     path('admin-logout/', views.admin_logout, name='admin_logout'),
+    path('admin/logout/', views.admin_logout),
 
     # ── Admin Dashboard & Profile ─────────────────────────────
+    path('admin/', views.admin_dashboard),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-dashboard/', views.admin_dashboard),
     path('admin/profile/', views.admin_profile, name='admin_profile'),
@@ -28,6 +31,7 @@ urlpatterns = [
     path('admin/profile/remove-image/', views.remove_admin_profile_image, name='remove_admin_profile_image'),
     path('profile/remove-image/', views.remove_profile_image, name='remove_profile_image'),
     path('admin-reports/', views.admin_reports, name='admin_reports'),
+    path('admin/reports/', views.admin_reports),
     path('add-assignment/', views.add_assignment, name='add_assignment'),
     path('assignment/<int:assignment_id>/edit/', views.edit_assignment, name='edit_assignment'),
     path('assignment/<int:assignment_id>/delete/', views.delete_assignment, name='delete_assignment'),
