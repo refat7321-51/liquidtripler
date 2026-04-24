@@ -1,5 +1,6 @@
 from .models import Notice, ReadNotice, Quiz, Assignment, Resource, StudentAttempt, AssignmentSubmission
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.db.models import Q
 
 def unread_notices_count(request):
@@ -17,8 +18,12 @@ def unread_notices_count(request):
         unread_count = unread_notices.count()
         unread_ids = set(unread_notices.values_list('id', flat=True))
         
-        from django.utils.dateparse import parse_datetime
-        view_ts = getattr(request.user.student_profile, 'view_timestamps', {})
+        view_ts = {}
+        if not request.user.is_staff:
+            try:
+                view_ts = request.user.student_profile.view_timestamps
+            except Exception:
+                view_ts = {}
         
         # New Quizzes: Published, not expired, not attempted, and created after last view
         attempted_quiz_ids = StudentAttempt.objects.filter(student=request.user).values_list('quiz_id', flat=True)
