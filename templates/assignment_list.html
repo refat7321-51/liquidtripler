@@ -250,10 +250,10 @@
                     <i class="fas fa-users"></i> View Submissions
                 </a>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                    <a href="{% url 'edit_assignment' item.assignment.id %}" class="btn-assignment" style="margin: 0; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;">
+                    <a href="{% url 'edit_assignment' item.assignment.id %}" class="btn-assignment" style="margin: 0; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem;">
                         <i class="fas fa-edit"></i> Edit
                     </a>
-                    <button onclick="confirmDeleteSubmission({{ item.assignment.id }}, '{{ item.assignment.title|escapejs }}')" class="btn-assignment" style="margin: 0; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; cursor: pointer;">
+                    <button onclick="confirmDeleteSubmission({{ item.assignment.id }}, '{{ item.assignment.title|escapejs }}')" class="btn-assignment" style="margin: 0; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem;">
                         <i class="fas fa-trash-alt"></i> Delete
                     </button>
                 </div>
