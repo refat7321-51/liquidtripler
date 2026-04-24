@@ -203,7 +203,6 @@ def check_badges(user):
     # 10. Early Bird (requirement_type='early_bird_quiz', value=5)
     early_bird_badge = Badge.objects.filter(requirement_type='early_bird_quiz').first()
     if early_bird_badge:
-        from django.utils import timezone
         all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
         attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=user, is_submitted=True)}
         
@@ -675,7 +674,6 @@ def student_profile(request):
             current_val = streak
             target_val = badge.requirement_value
         elif badge.requirement_type == 'early_bird_quiz':
-            from django.utils import timezone
             all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
             attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=request.user, is_submitted=True)}
             current_streak = 0
@@ -1627,7 +1625,6 @@ def student_dashboard(request):
                 status_text = f"{count}/{badge.requirement_value} Perfect Assignments"
                 current_val = count
             elif badge.requirement_type == 'early_bird_quiz':
-                from django.utils import timezone
                 all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
                 attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=request.user, is_submitted=True)}
                 current_streak = 0
@@ -2196,7 +2193,6 @@ def admin_student_progress(request, user_id):
         elif badge.requirement_type == 'high_score':
             current_val = StudentAttempt.objects.filter(student=target_user, is_submitted=True).aggregate(max_score=Max('score'))['max_score'] or 0
         elif badge.requirement_type == 'early_bird_quiz':
-            from django.utils import timezone
             all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
             attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=target_user, is_submitted=True)}
             current_streak = 0
