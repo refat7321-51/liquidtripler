@@ -245,15 +245,15 @@
 
             <!-- Action Button -->
             {% if user.is_staff %}
-            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.25rem;">
-                <a href="{% url 'admin_submissions' %}?assignment={{ item.assignment.id }}" class="btn-assignment btn-view" style="margin: 0; background: #f0f9ff; color: #0369a1; border-color: #bae6fd;">
+            <div style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                <a href="{% url 'admin_submissions' %}?assignment={{ item.assignment.id }}" class="btn-assignment" style="margin: 0; background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                     <i class="fas fa-users"></i> View Submissions
                 </a>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                    <a href="{% url 'edit_assignment' item.assignment.id %}" class="btn-assignment" style="margin: 0; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem;">
+                <div style="display: flex; gap: 0.75rem; width: 100%;">
+                    <a href="{% url 'edit_assignment' item.assignment.id %}" class="btn-assignment" style="margin: 0; flex: 1; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                         <i class="fas fa-edit"></i> Edit
                     </a>
-                    <button onclick="confirmDeleteSubmission({{ item.assignment.id }}, '{{ item.assignment.title|escapejs }}')" class="btn-assignment" style="margin: 0; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem;">
+                    <button onclick="confirmDeleteSubmission({{ item.assignment.id }}, '{{ item.assignment.title|escapejs }}')" class="btn-assignment" style="margin: 0; flex: 1; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                         <i class="fas fa-trash-alt"></i> Delete
                     </button>
                 </div>
