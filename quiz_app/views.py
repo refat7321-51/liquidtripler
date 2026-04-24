@@ -43,14 +43,22 @@ def get_client_ip(request):
 
 
 def send_email_async(subject, message, recipient_list, html_message=None):
-    """Sends email in a background thread to prevent blocking the main request."""
-    # Use threading to offload the network-heavy mail sending task
-    thread = threading.Thread(
-        target=send_mail,
-        args=(subject, message, settings.EMAIL_DEFAULT_FROM_EMAIL, recipient_list),
-        kwargs={'html_message': html_message, 'fail_silently': False}
-    )
-    thread.start()
+    """Sends email directly and returns success status."""
+    try:
+        send_mail(
+            subject, 
+            message, 
+            settings.EMAIL_DEFAULT_FROM_EMAIL, 
+            recipient_list,
+            html_message=html_message, 
+            fail_silently=False
+        )
+        return True
+    except Exception as e:
+        print(f"Email Error: {e}")
+        return False
+
+
 
 
 def get_user_agent(request):
@@ -246,16 +254,17 @@ def student_register(request):
             'otp': otp
         })
         
-        try:
-            send_email_async(
-                subject,
-                f"Your OTP is {otp}", # Fallback plain text
-                [email],
-                html_message=html_message
-            )
+        sent = send_email_async(
+            subject,
+            f"Your OTP is {otp}", # Fallback plain text
+            [email],
+            html_message=html_message
+        )
+        
+        if sent:
             return redirect('verify_otp')
-        except Exception as e:
-            errors['email'] = f"Failed to send OTP. Please check your email or try again. Error: {str(e)}"
+        else:
+            errors['email'] = "Failed to send OTP. Please check your email or try again later."
             return render(request, 'student_register.html', {'errors': errors, 'form_data': request.POST})
 
     return render(request, 'student_register.html')
@@ -330,7 +339,7 @@ def resend_otp(request):
     })
 
 
-    send_email_async(
+    sent = send_email_async(
         subject, 
         f"Your new OTP is {otp}", 
         [reg_data['email']],
@@ -338,7 +347,11 @@ def resend_otp(request):
     )
     
     from django.contrib import messages
-    messages.success(request, "A new OTP has been sent to your email.")
+    if sent:
+        messages.success(request, "A new OTP has been sent to your email.")
+    else:
+        messages.error(request, "Failed to send OTP. Please try again later.")
+        
     return redirect('verify_otp')
 
 
@@ -364,13 +377,17 @@ def student_password_reset(request):
                 'otp': otp
             })
             
-            send_email_async(
+            sent = send_email_async(
                 subject,
                 f"Your password reset OTP is {otp}",
                 [email],
                 html_message=html_message
             )
-            return redirect('student_password_reset_verify')
+            
+            if sent:
+                return redirect('student_password_reset_verify')
+            else:
+                return render(request, 'student_password_reset.html', {'error': 'Failed to send OTP. Please try again later.'})
         except User.DoesNotExist:
             return render(request, 'student_password_reset.html', {'error': 'No account found with this email.'})
             
@@ -418,7 +435,7 @@ def resend_password_reset_otp(request):
         'otp': otp
     })
     
-    send_email_async(
+    sent = send_email_async(
         subject,
         f"Your new password reset OTP is {otp}",
         [email],
@@ -426,7 +443,11 @@ def resend_password_reset_otp(request):
     )
     
     from django.contrib import messages
-    messages.success(request, f"A new OTP has been sent to {email}")
+    if sent:
+        messages.success(request, f"A new OTP has been sent to {email}")
+    else:
+        messages.error(request, "Failed to send new OTP. Please try again later.")
+        
     return redirect('student_password_reset_verify')
 
 
