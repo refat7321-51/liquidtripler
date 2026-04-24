@@ -567,11 +567,10 @@ def student_profile(request):
         elif badge.requirement_type == 'total_score_threshold':
             current_val = total_marks
         elif badge.requirement_type == 'leaderboard_rank':
-            # For rank, lower is better. We'll show progress towards target rank.
             current_val = my_rank if my_rank else 0
-            # Target is usually 1, 3, or 5. If my_rank <= target, it's 100%.
+            if my_rank and my_rank <= target_val:
+                is_earned = True
         elif badge.requirement_type == 'high_score':
-            # Check if any full score exists
             full_score_exists = StudentAttempt.objects.filter(
                 student=request.user, is_submitted=True
             ).extra(where=["score = total_questions AND total_questions > 0"]).exists()
@@ -588,7 +587,6 @@ def student_profile(request):
             current_val = streak
             target_val = badge.requirement_value
         elif badge.requirement_type == 'early_bird_quiz':
-            # Count quizzes submitted within 1 hour of quiz being published/created
             submitted = StudentAttempt.objects.filter(
                 student=request.user, is_submitted=True
             ).select_related('quiz')
@@ -602,17 +600,18 @@ def student_profile(request):
             current_val = early_count
             target_val = badge.requirement_value
         else:
-            # For others, if earned show 1/1, else 0/1
             current_val = 1 if is_earned else 0
             target_val = 1
 
         # Calculate percentage (capped at 100)
         if badge.requirement_type == 'leaderboard_rank':
-            # Progress shows: current rank / target rank. 
-            # If my_rank is 5, target is 3. We want to show "5 / 3", but percent should be calculated properly.
-            # But template does: {{ item.current_val }} / {{ item.target_val }}
-            # For rank, progress is technically "earned" if current <= target.
-            percent = 100 if is_earned else (20 if my_rank else 0)
+            if is_earned:
+                percent = 100
+            elif my_rank:
+                percent = int((target_val / my_rank) * 100)
+                percent = min(100, max(0, percent))
+            else:
+                percent = 0
         else:
             percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
             
