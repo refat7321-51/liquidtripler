@@ -210,6 +210,7 @@ def get_badge_data(user):
             'is_earned': is_earned or percent >= 100,
             'current_val': current_val,
             'target_val': target_val,
+            'remaining': max(0, target_val - current_val),
             'percent': percent
         })
     
@@ -1946,6 +1947,7 @@ def admin_student_progress(request, user_id):
             'is_earned': is_earned or percent >= 100,
             'current_val': current_val,
             'target_val': target_val,
+            'remaining': max(0, target_val - current_val),
             'percent': percent
         })
 
