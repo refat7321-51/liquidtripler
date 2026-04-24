@@ -104,16 +104,10 @@ if os.environ.get('VERCEL') or not DEBUG:
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': 'dga82u1w1',
         'API_KEY': '286863492173943',
-        'API_SECRET': 'aK11zRB-naqxysF-u6Kzk3GBR90',
+        'API_SECRET': 'aK11zRB-naqxysF-u6Kzk3GBr90',
     }
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    
-    import cloudinary
-    cloudinary.config(
-        cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
-        api_key=CLOUDINARY_STORAGE['API_KEY'],
-        api_secret=CLOUDINARY_STORAGE['API_SECRET']
-    )
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

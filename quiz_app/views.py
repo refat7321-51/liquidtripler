@@ -423,9 +423,16 @@ def student_profile(request):
 
         if 'profile_image' in request.FILES:
             profile.profile_image = request.FILES['profile_image']
-            profile.save()
+            try:
+                profile.save()
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Cloudinary upload error: {e}")
+                messages.error(request, "Error uploading image. Please check your Cloudinary settings.")
 
         return redirect('student_profile')
+
 
     attempts = StudentAttempt.objects.filter(
         student=request.user, is_submitted=True
