@@ -931,7 +931,7 @@
             </div>
             <div style="overflow-y: auto; flex: 1; scroll-behavior: smooth;">
                 {% for notice in latest_notices %}
-                <a href="/notices/" class="notice-item {% if notice.id in unread_notice_ids %}unread{% endif %}" style="display: block; padding: 1rem 1.25rem; border-bottom: 1px solid #f8fafc; text-decoration: none; transition: background 0.2s; position: relative; {% if notice.id in unread_notice_ids %}background: #f0f9ff; border-left: 3px solid #3b82f6;{% else %}background: white;{% endif %}" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='{% if notice.id in unread_notice_ids %}#f0f9ff{% else %}white{% endif %}'">
+                <a href="{% if notice.link %}{{ notice.link }}{% else %}/notices/{% endif %}" class="notice-item {% if notice.id in unread_notice_ids %}unread{% endif %}" style="display: block; padding: 1rem 1.25rem; border-bottom: 1px solid #f8fafc; text-decoration: none; transition: background 0.2s; position: relative; {% if notice.id in unread_notice_ids %}background: #f0f9ff; border-left: 3px solid #3b82f6;{% else %}background: white;{% endif %}" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='{% if notice.id in unread_notice_ids %}#f0f9ff{% else %}white{% endif %}'">
                     <div style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
                         {{ notice.title }}
                         {% if notice.id in unread_notice_ids %}

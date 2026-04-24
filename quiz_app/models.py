@@ -160,6 +160,7 @@ class Notice(models.Model):
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='notices')
     publish_at = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
+    link = models.CharField(max_length=500, blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -419,18 +420,40 @@ def auto_announce_assignment(sender, instance, created, **kwargs):
     except:
         deadline_str = "N/A"
 
+    from django.urls import reverse
+    link = reverse('assignment_detail', kwargs={'assignment_id': instance.id})
+    
     Notice.objects.create(
         title=f"Assignment {action.capitalize()}: {instance.title}",
-        content=f"Assignment '{instance.title}' has been {action}. Submission Deadline: {deadline_str}."
+        content=f"Assignment '{instance.title}' has been {action}. Submission Deadline: {deadline_str}.",
+        link=link
     )
 
 @receiver(post_save, sender=Resource)
 def auto_announce_resource(sender, instance, created, **kwargs):
     action = "uploaded" if created else "updated"
+    from django.urls import reverse
+    link = reverse('resource_list')
+    
     Notice.objects.create(
         title=f"Resource {action.capitalize()}: {instance.title}",
-        content=f"A new {instance.get_category_display()} titled '{instance.title}' has been {action}."
+        content=f"A new {instance.get_category_display()} titled '{instance.title}' has been {action}.",
+        link=link
     )
+
+@receiver(post_save, sender=Quiz)
+def auto_announce_quiz(sender, instance, created, **kwargs):
+    if created or (instance.is_published and not Notice.objects.filter(title__icontains=instance.title, title__icontains="Quiz").exists()):
+        action = "created" if created else "published"
+        if instance.is_published:
+            from django.urls import reverse
+            link = reverse('start_quiz', kwargs={'quiz_id': instance.id})
+            
+            Notice.objects.create(
+                title=f"Quiz {action.capitalize()}: {instance.title}",
+                content=f"A new quiz '{instance.title}' is now available. Time Limit: {instance.time_limit} minutes.",
+                link=link
+            )
 
 @receiver(post_save, sender=Attendance)
 @receiver(models.signals.post_delete, sender=Attendance)
