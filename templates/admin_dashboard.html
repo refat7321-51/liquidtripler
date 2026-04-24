@@ -973,7 +973,7 @@ function toggleQuizzes() {
     }
 }
 
-function admSwitch(name, btn) {
+function admSwitch(name, btn, skipScroll = false) {
     try {
         console.log('Switching to:', name);
         // Hide all panels
@@ -998,8 +998,8 @@ function admSwitch(name, btn) {
         // Activate button
         if (btn) btn.classList.add('active');
         
-        // Scroll to content on mobile for better UX
-        if (window.innerWidth <= 768 && target) {
+        // Scroll to content on mobile for better UX (only if not skipScroll)
+        if (!skipScroll && window.innerWidth <= 768 && target) {
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     } catch (err) {
@@ -1106,7 +1106,7 @@ function initDashboard() {
     console.log('Initializing Dashboard...');
     const firstTab = document.querySelector('.ad-tab-btn');
     if (firstTab) {
-        admSwitch('quizzes', firstTab);
+        admSwitch('quizzes', firstTab, true); // Pass true to skip scroll on load
     }
 }
 
