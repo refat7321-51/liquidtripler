@@ -1450,7 +1450,7 @@ def student_dashboard(request):
         'total_assignments': total_assignments,
         'completed_assignments': completed_assignments,
         'pending_assignments': pending_assignments,
-        'my_rank': my_rank,
+        'rank': rank,
         'attendance_p': attendance_p,
         'quiz_p': quiz_p,
         'assignment_p': assignment_p,
