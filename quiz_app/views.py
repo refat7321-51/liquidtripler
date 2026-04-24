@@ -43,14 +43,19 @@ def get_client_ip(request):
 
 
 def send_email_async(subject, message, recipient_list, html_message=None):
-    """Sends email in a background thread to prevent blocking the main request."""
-    # Use threading to offload the network-heavy mail sending task
-    thread = threading.Thread(
-        target=send_mail,
-        args=(subject, message, settings.EMAIL_DEFAULT_FROM_EMAIL, recipient_list),
-        kwargs={'html_message': html_message, 'fail_silently': False}
-    )
-    thread.start()
+    """Sends email directly. (Synchronous for Vercel reliability)"""
+    try:
+        send_mail(
+            subject, 
+            message, 
+            settings.EMAIL_DEFAULT_FROM_EMAIL, 
+            recipient_list, 
+            html_message=html_message, 
+            fail_silently=False
+        )
+    except Exception as e:
+        print(f"Email error: {str(e)}")
+        raise e
 
 
 def get_user_agent(request):
