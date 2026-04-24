@@ -142,10 +142,17 @@ def check_badges(user):
     for b in quiz_badges:
         if perfect_quizzes >= b.requirement_value:
             EarnedBadge.objects.get_or_create(user=user, badge=b)
-        else:
-            # Optionally remove other medals if the user dropped rank
-            # For now we keep old medals as 'achievements', but prevent awarding new ones incorrectly
-            pass
+
+    # Assignment Full Marks Badges
+    assign_badges = Badge.objects.filter(requirement_type='assignment_full_marks')
+    if assign_badges.exists():
+        from django.db.models import F
+        perfect_assignments = AssignmentSubmission.objects.filter(
+            student=user, is_graded=True, marks=F('assignment__total_marks')
+        ).count()
+        for b in assign_badges:
+            if perfect_assignments >= b.requirement_value:
+                EarnedBadge.objects.get_or_create(user=user, badge=b)
 
     # 6. No Penalty Hero (requirement_type='no_penalty_full_score', value=0)
     no_penalty_full = StudentAttempt.objects.filter(student=user, is_submitted=True, tab_switch_count=0)
@@ -631,6 +638,11 @@ def student_profile(request):
             current_val = StudentAttempt.objects.filter(
                 student=request.user, is_submitted=True
             ).extra(where=["score = total_questions AND total_questions > 0"]).count()
+        elif badge.requirement_type == 'assignment_full_marks':
+            from django.db.models import F
+            current_val = AssignmentSubmission.objects.filter(
+                student=request.user, is_graded=True, marks=F('assignment__total_marks')
+            ).count()
         elif badge.requirement_type == 'resource_download':
             current_val = res_count
         elif badge.requirement_type == 'total_score_threshold':
@@ -699,6 +711,7 @@ def student_profile(request):
         elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
         elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
+        elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
         
         badge_progress.append({
             'badge': badge,
@@ -1587,6 +1600,13 @@ def student_dashboard(request):
                 total_switches = StudentAttempt.objects.filter(student=request.user).aggregate(Sum('tab_switch_count'))['tab_switch_count__sum'] or 0
                 progress = min(round((total_switches / badge.requirement_value) * 100), 99)
                 status_text = f"{total_switches}/{badge.requirement_value} Tab Switches"
+            elif badge.requirement_type == 'assignment_full_marks':
+                from django.db.models import F
+                count = AssignmentSubmission.objects.filter(
+                    student=request.user, is_graded=True, marks=F('assignment__total_marks')
+                ).count()
+                progress = min(round((count / badge.requirement_value) * 100), 99)
+                status_text = f"{count}/{badge.requirement_value} Perfect Assignments"
             else:
                 progress = 0
                 status_text = "Not earned yet"
@@ -1604,6 +1624,7 @@ def student_dashboard(request):
         elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
         elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
+        elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
 
         badges_data.append({
             'badge': badge,
@@ -2121,6 +2142,11 @@ def admin_student_progress(request, user_id):
             current_val = StudentAttempt.objects.filter(
                 student=target_user, is_submitted=True
             ).extra(where=["score = total_questions AND total_questions > 0"]).count()
+        elif badge.requirement_type == 'assignment_full_marks':
+            from django.db.models import F
+            current_val = AssignmentSubmission.objects.filter(
+                student=target_user, is_graded=True, marks=F('assignment__total_marks')
+            ).count()
         elif badge.requirement_type == 'total_score':
             current_val = student_total_score
         elif badge.requirement_type == 'leaderboard_rank':
@@ -2154,6 +2180,7 @@ def admin_student_progress(request, user_id):
         elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
         elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
+        elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
 
         badge_progress.append({
             'badge': badge,
