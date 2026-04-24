@@ -755,6 +755,7 @@ def admin_dashboard(request):
         'total_quizzes': quizzes.count(),
         'total_attempts': all_attempts.count(),
         'total_warnings': WarningLog.objects.count(),
+        'total_students': User.objects.filter(student_profile__isnull=False).count(),
     }
     return render(request, 'admin_dashboard.html', context)
 

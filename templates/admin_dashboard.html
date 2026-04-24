@@ -499,20 +499,19 @@
 </style>
 
 <!-- ── Stats ── -->
-<div class="ad-stats-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:1.75rem;">
-    <div class="ad-stat ad-stat-blue"
+    <a href="{% url 'student_list' %}" class="ad-stat ad-stat-blue" style="text-decoration:none;"
          onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 18px 40px rgba(59,130,246,0.12)';"
          onmouseout="this.style.transform='';this.style.boxShadow='';">
-        <div class="ad-stat-ico ad-ico-blue">📚</div>
+        <div class="ad-stat-ico ad-ico-blue">👥</div>
         <div>
-            <div class="ad-stat-label">Total Quizzes</div>
-            <div class="ad-stat-num">{{ total_quizzes }}</div>
+            <div class="ad-stat-label">Total Students</div>
+            <div class="ad-stat-num">{{ total_students }}</div>
         </div>
-    </div>
+    </a>
     <div class="ad-stat ad-stat-purple"
          onmouseover="this.style.transform='translateY(-6px)';this.style.boxShadow='0 18px 40px rgba(139,92,246,0.12)';"
          onmouseout="this.style.transform='';this.style.boxShadow='';">
-        <div class="ad-stat-ico ad-ico-purple">👥</div>
+        <div class="ad-stat-ico ad-ico-purple">📝</div>
         <div>
             <div class="ad-stat-label">Student Attempts</div>
             <div class="ad-stat-num">{{ total_attempts }}</div>
