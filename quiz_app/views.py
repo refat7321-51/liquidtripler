@@ -719,6 +719,8 @@ def student_profile(request):
         elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} consecutive Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
         elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
+        elif badge.requirement_type == 'no_penalty_full_score': req_text = "Get 100% with 0 tab switches"
+        elif badge.requirement_type == 'consistency_streak': req_text = f"Get 90%+ in {badge.requirement_value} consecutive Quizzes"
         
         badge_progress.append({
             'badge': badge,
@@ -1662,6 +1664,8 @@ def student_dashboard(request):
         elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} consecutive Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
         elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
+        elif badge.requirement_type == 'no_penalty_full_score': req_text = "Get 100% with 0 tab switches"
+        elif badge.requirement_type == 'consistency_streak': req_text = f"Get 90%+ in {badge.requirement_value} consecutive Quizzes"
 
         badges_data.append({
             'badge': badge,
@@ -2184,7 +2188,7 @@ def admin_student_progress(request, user_id):
             current_val = AssignmentSubmission.objects.filter(
                 student=target_user, is_graded=True, marks=F('assignment__total_marks')
             ).count()
-        elif badge.requirement_type == 'total_score':
+        elif badge.requirement_type == 'total_score_threshold':
             current_val = student_total_score
         elif badge.requirement_type == 'leaderboard_rank':
             current_val = my_rank if my_rank else 0
@@ -2233,6 +2237,8 @@ def admin_student_progress(request, user_id):
         elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} consecutive Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
         elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
+        elif badge.requirement_type == 'no_penalty_full_score': req_text = "Get 100% with 0 tab switches"
+        elif badge.requirement_type == 'consistency_streak': req_text = f"Get 90%+ in {badge.requirement_value} consecutive Quizzes"
 
         badge_progress.append({
             'badge': badge,
