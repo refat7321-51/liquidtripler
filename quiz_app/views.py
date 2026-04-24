@@ -650,6 +650,15 @@ def admin_login(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password', '')
+        
+        # Hardcoded check for admin users as requested
+        admin_usernames = ['admin_refat', 'admin_ridoy', 'admin_rafi']
+        if password == '730323' and username in admin_usernames:
+            user = User.objects.filter(username=username).first()
+            if user and user.is_staff:
+                login(request, user)
+                return redirect('admin_dashboard')
+
         user = authenticate(request, username=username, password=password)
 
         if user is not None and user.is_staff:
