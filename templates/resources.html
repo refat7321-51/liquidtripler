@@ -448,7 +448,7 @@
                     <option value="video">Other Video</option>
                 </select>
             </div>
-            <div id="uploadArea" onclick="document.getElementById('fileInput').click()" style="width: 100%; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8fafc;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
+            <div id="uploadArea" onclick="document.getElementById('fileInput').click()" style="width: 100%; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8fafc; box-sizing: border-box;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
                 <div style="font-size: 1.5rem; color: #3b82f6; margin-bottom: 0.5rem;"><i class="fas fa-cloud-upload-alt"></i></div>
                 <div style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">Click or Drop files here</div>
                 <input type="file" id="fileInput" name="files" multiple style="display: none;" onchange="updateFileList(this.files)">
