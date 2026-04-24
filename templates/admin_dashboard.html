@@ -800,7 +800,7 @@
                     <td>
                         <div class="ad-adj">
                             <button onclick="adjustScore({{ attempt.id }}, 'minus')" class="ad-adj-btn ad-adj-m">−</button>
-                            <input type="number" id="amt-{{ attempt.id }}" value="1" min="1" max="{{ attempt.total_questions }}" class="ad-adj-inp">
+                            <input type="number" id="amt-d-{{ attempt.id }}" value="1" min="1" max="{{ attempt.total_questions }}" class="ad-adj-inp ad-amt-{{ attempt.id }}">
                             <button onclick="adjustScore({{ attempt.id }}, 'add')" class="ad-adj-btn ad-adj-p">＋</button>
                             <button onclick="setScore({{ attempt.id }})" class="ad-adj-set">Set</button>
                         </div>
@@ -840,7 +840,7 @@
                 <div class="ad-adj" style="justify-content:center; width:100%; gap: 10px;">
                     <div style="display:flex; align-items:center; gap:5px;">
                         <button onclick="adjustScore({{ attempt.id }}, 'minus')" class="ad-adj-btn ad-adj-m">−</button>
-                        <input type="number" id="amt-{{ attempt.id }}" value="1" min="1" max="{{ attempt.total_questions }}" class="ad-adj-inp">
+                        <input type="number" id="amt-m-{{ attempt.id }}" value="1" min="1" max="{{ attempt.total_questions }}" class="ad-adj-inp ad-amt-{{ attempt.id }}">
                         <button onclick="adjustScore({{ attempt.id }}, 'add')" class="ad-adj-btn ad-adj-p">＋</button>
                     </div>
                     <button onclick="setScore({{ attempt.id }})" class="ad-adj-set" style="flex:1;">Set Marks</button>
@@ -1014,7 +1014,11 @@ document.querySelectorAll('.ad-prog-fill[data-score]').forEach(function(el) {
 });
 
 /* ── Score helpers ─────── */
-function getAmount(id) { return parseInt(document.getElementById('amt-' + id).value) || 1; }
+function getAmount(id) { 
+    // Try to get value from whichever input is visible/active
+    const el = document.querySelector('.ad-amt-' + id);
+    return el ? (parseInt(el.value) || 1) : 1; 
+}
 
 function adjustScore(id, action) {
     fetch(`/attempt/${id}/adjust-score/`, {

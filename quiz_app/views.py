@@ -1308,28 +1308,33 @@ def leaderboard(request):
 @login_required(login_url='admin_login')
 def adjust_score(request, attempt_id):
     if not request.user.is_staff:
-        return redirect('admin_login')
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
 
     attempt = get_object_or_404(StudentAttempt, id=attempt_id)
 
     if request.method == 'POST':
-        action = request.POST.get('action')
-        amount = int(request.POST.get('amount', 1))
+        try:
+            import json
+            data = json.loads(request.body)
+            action = data.get('action')
+            amount = int(data.get('amount', 1))
 
-        if action == 'add':
-            attempt.score = min(attempt.score + amount, attempt.total_questions)
-        elif action == 'minus':
-            attempt.score = max(attempt.score - amount, 0)
-        elif action == 'set':
-            attempt.score = max(0, min(amount, attempt.total_questions))
+            if action == 'add':
+                attempt.score = min(attempt.score + amount, attempt.total_questions)
+            elif action == 'minus':
+                attempt.score = max(attempt.score - amount, 0)
+            elif action == 'set':
+                attempt.score = max(0, min(amount, attempt.total_questions))
 
-        attempt.save()
-        return JsonResponse({
-            'success': True,
-            'new_score': attempt.score,
-            'total': attempt.total_questions,
-            'percentage': round((attempt.score / attempt.total_questions * 100) if attempt.total_questions > 0 else 0, 1)
-        })
+            attempt.save()
+            return JsonResponse({
+                'success': True,
+                'new_score': attempt.score,
+                'total': attempt.total_questions,
+                'percentage': round((attempt.score / attempt.total_questions * 100) if attempt.total_questions > 0 else 0, 1)
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
     return JsonResponse({'success': False}, status=400)
 
