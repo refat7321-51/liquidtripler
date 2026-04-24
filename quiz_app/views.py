@@ -538,8 +538,7 @@ def student_profile(request):
     
     total_marks = attendance_score + quiz_score + assignment_score + profile.bonus_marks
 
-    # Earned Badges
-    earned_badges = EarnedBadge.objects.filter(user=request.user).select_related('badge')
+    badge_progress = get_badge_data(request.user)
 
     context = {
         'student': request.user,
@@ -548,7 +547,7 @@ def student_profile(request):
         'my_rank': my_rank,
         'total_students': len(temp),
         'total_marks': total_marks,
-        'earned_badges': earned_badges,
+        'badge_progress': badge_progress,
         'attendance_count': att_count_self,
     }
     return render(request, 'student_profile.html', context)
@@ -1209,8 +1208,6 @@ def adjust_score(request, attempt_id):
     return JsonResponse({'success': False}, status=400)
 
 
-# ==================== NEW LMS VIEWS ====================
-
 @login_required(login_url='student_login')
 def student_dashboard(request):
     if request.user.is_staff:
@@ -1220,46 +1217,24 @@ def student_dashboard(request):
     
     # Quiz stats
     attempts = StudentAttempt.objects.filter(student=request.user, is_submitted=True).order_by('-submitted_at')
-    total_quiz_score = sum(a.score for a in attempts)
     recent_attempt = attempts.first()
     recent_quiz_score = recent_attempt.score if recent_attempt else None
     recent_quiz_total = recent_attempt.total_questions if recent_attempt else None
     
     # Assignment stats
-    total_assignments = Assignment.objects.count()
-    completed_assignments = AssignmentSubmission.objects.filter(student=request.user).count()
-    pending_assignments = total_assignments - completed_assignments
+    from django.utils import timezone
+    now = timezone.now()
+    submitted_assignment_ids = AssignmentSubmission.objects.filter(student=request.user).values_list('assignment_id', flat=True)
+    # Pending = Not submitted AND (No deadline OR Deadline not yet passed)
+    pending_assignments = Assignment.objects.filter(
+        deadline__gt=now
+    ).exclude(id__in=submitted_assignment_ids).count()
+    completed_assignments = len(submitted_assignment_ids)
     
-    # --- Unified Ranking System (Matches Leaderboard) ---
-    all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
+    # Ranking and Marks
+    total_score, rank = get_user_ranking_stats(request.user)
     
-    rank_list = []
-    from django.db.models import Max
-    for s in all_students:
-        s_attempts = StudentAttempt.objects.filter(student=s, is_submitted=True)
-        q_score = sum(item['max_score'] for item in s_attempts.values('quiz').annotate(max_score=Max('score')))
-        att_score = (s.student_profile.attendance_count * 5)
-        # 3. Assignment Score (Only include if manually published)
-        ass_score = sum(sub.marks for sub in AssignmentSubmission.objects.filter(
-            student=s, 
-            is_graded=True,
-            is_published=True
-        ))
-        bonus = s.student_profile.bonus_marks
-        
-        rank_list.append({'student_id': s.id, 'total_score': q_score + att_score + ass_score + bonus})
-    
-    rank_list.sort(key=lambda x: -x['total_score'])
-    my_rank = next((i for i, x in enumerate(rank_list, 1) if x['student_id'] == request.user.id), None)
-    
-    # --- Unified Raw Mark Scoring System ---
-    # Formula: Total = (Attendance * 5) + Quiz Marks + Assignment Marks
-    
-    # 1. Attendance Points
-    attendance_earned = profile.attendance_count * 5
-    attendance_possible = 30 * 5  # Target of 30 days
-    
-    # 2. Quiz Points
+    # Academic Overview Stats
     all_quizzes = Quiz.objects.filter(is_published=True).prefetch_related('questions')
     total_q_possible = sum(q.questions.count() for q in all_quizzes)
     
@@ -1269,7 +1244,6 @@ def student_dashboard(request):
     ).values('quiz').annotate(max_score=Max('score'))
     student_q_earned = sum(item['max_score'] for item in best_scores)
     
-    # 3. Assignment Points
     all_assignments = Assignment.objects.all()
     total_a_possible = sum(a.total_marks for a in all_assignments)
     
@@ -1280,83 +1254,24 @@ def student_dashboard(request):
     )
     student_a_earned = sum(s.marks for s in submissions)
     
-    # Academic Overview Stats (Updated to Mark-based)
     attendance_p = min(round((profile.attendance_count / 30) * 100), 100)
-    
-    # Quiz Marks Percentage
     quiz_p = round((student_q_earned / total_q_possible * 100)) if total_q_possible > 0 else 0
-    
-    # Assignment Marks Percentage
     assignment_p = round((student_a_earned / total_a_possible * 100)) if total_a_possible > 0 else 0
 
     # New Features Data
-    now = timezone.now()
     upcoming_quizzes = Quiz.objects.filter(is_published=True, start_time__gt=now).order_by('start_time')
-    recent_activities = ActivityLog.objects.filter(user=request.user).order_by('-timestamp')[:50] # Get more for filtering if needed
+    recent_activities = ActivityLog.objects.filter(user=request.user).order_by('-timestamp')[:50]
     
-    all_badges = Badge.objects.all()
-    earned_badge_ids = set(EarnedBadge.objects.filter(user=request.user).values_list('badge_id', flat=True))
+    # Badge Data
+    badge_progress = get_badge_data(request.user)
     
-    total_score, rank = get_user_ranking_stats(request.user)
-    
-    badges_data = []
-    for badge in all_badges:
-        is_earned = badge.id in earned_badge_ids
-        progress = 0
-        status_text = ""
-        
-        if is_earned:
-            progress = 100
-            status_text = "Completed!"
-        else:
-            if badge.requirement_type == 'quiz_count':
-                count = StudentAttempt.objects.filter(student=request.user, is_submitted=True).count()
-                progress = min(round((count / badge.requirement_value) * 100), 99)
-                status_text = f"{count}/{badge.requirement_value} Quizzes"
-            elif badge.requirement_type == 'total_score_threshold':
-                progress = min(round((total_score / badge.requirement_value) * 100), 99)
-                status_text = f"{total_score}/{badge.requirement_value} Points"
-            elif badge.requirement_type == 'resource_download':
-                count = ActivityLog.objects.filter(user=request.user, action='Downloaded Resource').count()
-                progress = min(round((count / badge.requirement_value) * 100), 99)
-                status_text = f"{count}/{badge.requirement_value} Resources"
-            elif badge.requirement_type == 'leaderboard_rank':
-                # Rank progress is tricky, let's just show current rank
-                # If rank is 10 and requirement is 3, show 30% maybe? No, let's just show rank.
-                status_text = f"Current Rank: #{rank}"
-                progress = 100 if rank <= badge.requirement_value else 0
-            elif badge.requirement_type == 'consistency_streak':
-                last_3 = StudentAttempt.objects.filter(student=request.user, is_submitted=True).order_by('-submitted_at')[:3]
-                count = 0
-                for att in last_3:
-                    if (att.score / att.total_questions) >= 0.9 if att.total_questions > 0 else False:
-                        count += 1
-                progress = min(round((count / badge.requirement_value) * 100), 99)
-                status_text = f"{count}/{badge.requirement_value} High Scores"
-            elif badge.requirement_type == 'total_tab_switches':
-                from django.db.models import Sum
-                total_switches = StudentAttempt.objects.filter(student=request.user).aggregate(Sum('tab_switch_count'))['tab_switch_count__sum'] or 0
-                progress = min(round((total_switches / badge.requirement_value) * 100), 99)
-                status_text = f"{total_switches}/{badge.requirement_value} Tab Switches"
-            else:
-                progress = 0
-                status_text = "Not earned yet"
-
-        badges_data.append({
-            'badge': badge,
-            'is_earned': is_earned,
-            'progress': progress,
-            'status_text': status_text
-        })
-    
-    # Sort badges: Earned badges first
-    badges_data.sort(key=lambda x: -x['is_earned'])
-
     context = {
         'profile': profile,
-        'quiz_stats': {'total_score': total_quiz_score, 'count': attempts.count()},
-        'assignment_stats': {'pending': pending_assignments, 'completed': completed_assignments},
-        'rank': my_rank,
+        'recent_quiz_score': recent_quiz_score,
+        'recent_quiz_total': recent_quiz_total,
+        'pending_assignments': pending_assignments,
+        'completed_assignments': completed_assignments,
+        'rank': rank,
         'attendance_p': attendance_p,
         'quiz_p': quiz_p,
         'assignment_p': assignment_p,
@@ -1364,16 +1279,11 @@ def student_dashboard(request):
         'total_q_possible': total_q_possible,
         'student_a_earned': student_a_earned,
         'total_a_possible': total_a_possible,
-        'total_quizzes': Quiz.objects.filter(is_published=True).count(),
-        'unique_attempts': StudentAttempt.objects.filter(student=request.user, is_submitted=True).values('quiz').distinct().count(),
-        'total_assignments': Assignment.objects.count(),
-        'completed_assignments': completed_assignments,
-        'recent_quiz_score': recent_quiz_score,
-        'recent_quiz_total': recent_quiz_total,
         'latest_notices': Notice.objects.all()[:3],
         'upcoming_quizzes': upcoming_quizzes,
-        'activities': recent_activities[:5],
-        'badges': badges_data,
+        'recent_activities': recent_activities,
+        'badge_progress': badge_progress,
+        'total_marks': total_score,
     }
     return render(request, 'dashboard.html', context)
 
