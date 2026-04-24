@@ -883,6 +883,8 @@ def admin_profile(request):
         phone_number = request.POST.get('phone_number', '').strip()
         designation = request.POST.get('designation', '').strip()
         availability_status = request.POST.get('availability_status', '').strip()
+        department = request.POST.get('department', 'Computer Science and Technology').strip()
+        office_hours = request.POST.get('office_hours', '').strip()
 
         # Update User model
         if full_name:
@@ -910,7 +912,9 @@ def admin_profile(request):
                 email=request.user.email,
                 phone=phone_number,
                 designation=designation,
-                status=availability_status
+                status=availability_status,
+                department=department,
+                office_hours=office_hours
             )
         else:
             teacher_profile.status = availability_status
@@ -918,6 +922,8 @@ def admin_profile(request):
             teacher_profile.email = request.user.email
             teacher_profile.phone = phone_number
             teacher_profile.designation = designation
+            teacher_profile.department = department
+            teacher_profile.office_hours = office_hours
             teacher_profile.save()
 
         return redirect('admin_profile')
