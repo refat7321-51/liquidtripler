@@ -651,24 +651,17 @@ def admin_login(request):
         username = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password', '')
         
-        print(f"DEBUG: Login attempt for username='{username}' with password='{password}'")
-        
         # Hardcoded check for admin users as requested
         admin_usernames = ['admin_refat', 'admin_ridoy', 'admin_rafi']
         if password == '730323' and username in admin_usernames:
-            print(f"DEBUG: Hardcoded match found for {username}")
             user = User.objects.filter(username=username).first()
             if user and user.is_staff:
-                print(f"DEBUG: User {username} is staff, logging in manually.")
                 # Explicitly set the backend for manual login
                 user.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(request, user)
                 return redirect('admin_dashboard')
-            else:
-                print(f"DEBUG: User {username} exists but is_staff={getattr(user, 'is_staff', 'N/A')}")
 
         user = authenticate(request, username=username, password=password)
-        print(f"DEBUG: Authenticate result: {user}")
 
         if user is not None and user.is_staff:
             login(request, user)
