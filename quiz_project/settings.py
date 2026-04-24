@@ -14,6 +14,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = [
+    'https://liquidtripler.vercel.app',
     'https://*.vercel.app',
     'https://liquidtripler.pythonanywhere.com',
     'http://127.0.0.1',
@@ -21,12 +22,12 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Security settings for production
-if not DEBUG:
+if os.environ.get('VERCEL') or not DEBUG:
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_HTTPONLY = True
     SESSION_COOKIE_HTTPONLY = True
-    CSRF_USE_SESSIONS = False
+    CSRF_TRUSTED_ORIGINS += ['https://liquidtripler.vercel.app']
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
 else:
