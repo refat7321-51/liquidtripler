@@ -1322,9 +1322,16 @@ def student_dashboard(request):
     recent_quiz_total = recent_attempt.total_questions if recent_attempt else None
     
     # Assignment stats
+    from django.utils import timezone
+    now = timezone.now()
+    submitted_assignment_ids = AssignmentSubmission.objects.filter(student=request.user).values_list('assignment_id', flat=True)
+    # Pending = Not submitted AND (No deadline OR Deadline not yet passed)
+    pending_assignments = Assignment.objects.filter(
+        deadline__gt=now
+    ).exclude(id__in=submitted_assignment_ids).count()
+    
     total_assignments = Assignment.objects.count()
     completed_assignments = AssignmentSubmission.objects.filter(student=request.user).count()
-    pending_assignments = total_assignments - completed_assignments
     
     # --- Unified Ranking System (Matches Leaderboard) ---
     all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
