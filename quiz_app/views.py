@@ -117,15 +117,29 @@ def ensure_badges_seeded():
         ('Mastermind', 'high_score', 6, '100% in 6 consecutive quizzes', 'fas fa-brain'),
     ]
     for name, req_type, req_val, desc, icon in badges:
-        badge_obj, created = Badge.objects.get_or_create(
-            name=name,
-            requirement_type=req_type,
-            defaults={'requirement_value': req_val, 'description': desc, 'icon_class': icon}
-        )
-        if not created:
-            # Update existing if needed
+        # Use filter().first() to avoid MultipleObjectsReturned if duplicates exist
+        badge_qs = Badge.objects.filter(name=name)
+        if badge_qs.count() > 1:
+            # Cleanup duplicates: keep the first one, delete others
+            badge_obj = badge_qs.first()
+            badge_qs.exclude(id=badge_obj.id).delete()
+        else:
+            badge_obj = badge_qs.first()
+
+        if not badge_obj:
+            badge_obj = Badge.objects.create(
+                name=name,
+                requirement_type=req_type,
+                requirement_value=req_val,
+                description=desc,
+                icon_class=icon
+            )
+        else:
+            # Update existing to match the current seeding definition
+            badge_obj.requirement_type = req_type
             badge_obj.requirement_value = req_val
             badge_obj.description = desc
+            badge_obj.icon_class = icon
             badge_obj.save()
 
 
