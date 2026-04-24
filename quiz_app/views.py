@@ -132,8 +132,15 @@ def check_badges(user):
     # 5. Leaderboard Rank Badges (requirement_type='leaderboard_rank')
     # Exclusive award: Only award the medal matching the current rank to avoid triple medals
     rank_badges = Badge.objects.filter(requirement_type='leaderboard_rank')
-    for b in rank_badges:
-        if rank == b.requirement_value:
+    # 2. Quiz Count Badges (requirement_type='quiz_count') - Now requires 100% scores
+    quiz_badges = Badge.objects.filter(requirement_type='quiz_count')
+    # Count only attempts where score == total_questions
+    perfect_quizzes = StudentAttempt.objects.filter(
+        student=user, is_submitted=True
+    ).extra(where=["score = total_questions AND total_questions > 0"]).count()
+    
+    for b in quiz_badges:
+        if perfect_quizzes >= b.requirement_value:
             EarnedBadge.objects.get_or_create(user=user, badge=b)
         else:
             # Optionally remove other medals if the user dropped rank
@@ -621,7 +628,9 @@ def student_profile(request):
         target_val = badge.requirement_value
         
         if badge.requirement_type == 'quiz_count':
-            current_val = q_count
+            current_val = StudentAttempt.objects.filter(
+                student=request.user, is_submitted=True
+            ).extra(where=["score = total_questions AND total_questions > 0"]).count()
         elif badge.requirement_type == 'resource_download':
             current_val = res_count
         elif badge.requirement_type == 'total_score_threshold':
@@ -679,7 +688,7 @@ def student_profile(request):
             
         # Add requirement text
         req_text = ""
-        if badge.requirement_type == 'quiz_count': req_text = f"Submit {badge.requirement_value} Quizzes"
+        if badge.requirement_type == 'quiz_count': req_text = f"Get 100% in {badge.requirement_value} Quizzes"
         elif badge.requirement_type == 'total_score_threshold': req_text = f"Earn {badge.requirement_value} Points"
         elif badge.requirement_type == 'resource_download': req_text = f"Download {badge.requirement_value} Resources"
         elif badge.requirement_type == 'leaderboard_rank': 
@@ -1540,7 +1549,9 @@ def student_dashboard(request):
             status_text = "Completed!"
         else:
             if badge.requirement_type == 'quiz_count':
-                count = StudentAttempt.objects.filter(student=request.user, is_submitted=True).count()
+                count = StudentAttempt.objects.filter(
+                    student=request.user, is_submitted=True
+                ).extra(where=["score = total_questions AND total_questions > 0"]).count()
                 progress = min(round((count / badge.requirement_value) * 100), 99)
                 status_text = f"{count}/{badge.requirement_value} Quizzes"
             elif badge.requirement_type == 'total_score_threshold':
@@ -1582,7 +1593,7 @@ def student_dashboard(request):
 
         # Add requirement text
         req_text = ""
-        if badge.requirement_type == 'quiz_count': req_text = f"Submit {badge.requirement_value} Quizzes"
+        if badge.requirement_type == 'quiz_count': req_text = f"Get 100% in {badge.requirement_value} Quizzes"
         elif badge.requirement_type == 'total_score_threshold': req_text = f"Earn {badge.requirement_value} Points"
         elif badge.requirement_type == 'resource_download': req_text = f"Download {badge.requirement_value} Resources"
         elif badge.requirement_type == 'leaderboard_rank': 
@@ -2107,7 +2118,9 @@ def admin_student_progress(request, user_id):
         # Dynamic calculation for progress display
         current_val = 0
         if badge.requirement_type == 'quiz_count':
-            current_val = attempts.count()
+            current_val = StudentAttempt.objects.filter(
+                student=target_user, is_submitted=True
+            ).extra(where=["score = total_questions AND total_questions > 0"]).count()
         elif badge.requirement_type == 'total_score':
             current_val = student_total_score
         elif badge.requirement_type == 'leaderboard_rank':
@@ -2130,7 +2143,7 @@ def admin_student_progress(request, user_id):
         
         # Add requirement text
         req_text = ""
-        if badge.requirement_type == 'quiz_count': req_text = f"Submit {badge.requirement_value} Quizzes"
+        if badge.requirement_type == 'quiz_count': req_text = f"Get 100% in {badge.requirement_value} Quizzes"
         elif badge.requirement_type == 'total_score_threshold': req_text = f"Earn {badge.requirement_value} Points"
         elif badge.requirement_type == 'resource_download': req_text = f"Download {badge.requirement_value} Resources"
         elif badge.requirement_type == 'leaderboard_rank': 
