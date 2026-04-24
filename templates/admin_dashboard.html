@@ -409,9 +409,13 @@
     .ad-acts { gap: 4px; }
     .ad-act { padding: 4px 10px; font-size: 0.72rem; }
     
-    /* Global Panel Visibility Fix for Mobile */
-    .ad-panel { display: none !important; }
-    .ad-panel.active { display: block !important; }
+    .ad-panel { 
+        display: none !important; 
+        animation: none !important; /* Disable animation on mobile to prevent disappearing */
+    }
+    .ad-panel.active { 
+        display: block !important; 
+    }
 
     .ad-card {
         margin-bottom: 2rem;
@@ -1055,7 +1059,16 @@ function getCookie(name) {
     return v;
 }
 
-setInterval(() => location.reload(), 30000);
+// Ensure the first tab is active on mobile load and fix disappearing issue
+window.addEventListener('DOMContentLoaded', (event) => {
+    const firstTab = document.querySelector('.ad-tab-btn');
+    if (firstTab && window.innerWidth <= 768) {
+        admSwitch('quizzes', firstTab);
+    }
+});
+
+// Removed auto-reload to prevent flickering/disappearing issues on mobile
+// setInterval(() => location.reload(), 30000);
 </script>
 
 {% endblock %}
