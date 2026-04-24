@@ -277,14 +277,30 @@ def resend_otp(request):
     if not reg_data:
         return redirect('student_register')
 
-    send_mail(
+    # Generate new OTP
+    import random
+    otp = str(random.randint(100000, 999999))
+    request.session['reg_otp'] = otp
+    
+    subject = f"Registration OTP - {otp}"
+    from django.template.loader import render_to_string
+    html_message = render_to_string('emails/otp_email.html', {
+        'otp': otp,
+        'full_name': reg_data['full_name']
+    })
+
+
+    send_email_async(
         subject, 
         f"Your new OTP is {otp}", 
-        settings.EMAIL_DEFAULT_FROM_EMAIL, 
         [reg_data['email']],
         html_message=html_message
     )
+    
+    from django.contrib import messages
+    messages.success(request, "A new OTP has been sent to your email.")
     return redirect('verify_otp')
+
 
 
 def student_password_reset(request):
