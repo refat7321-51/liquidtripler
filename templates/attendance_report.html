@@ -116,28 +116,30 @@
 
 <div class="report-container">
     <!-- Print-only header -->
-    <div class="print-only" style="margin-bottom: 2.5rem; border-bottom: 3px solid #1e293b; padding-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
-        <div style="text-align: left;">
-            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #3b82f6, #ec4899); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);">
-                    <i class="fas fa-graduation-cap" style="color: white; font-size: 1.5rem;"></i>
-                </div>
-                <div>
-                    <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -1px; background: linear-gradient(135deg, #3b82f6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;">Liquid_Triple_R</h2>
-                    <p style="margin: 0; color: #64748b; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;">Learning Management System</p>
-                </div>
-            </div>
-        </div>
-        <div style="text-align: right;">
-            <h1 style="margin: 0; color: #1e293b; font-size: 1.75rem; font-weight: 800; text-transform: uppercase;">Attendance Report</h1>
-            <p style="margin: 5px 0 0; color: #64748b; font-weight: 700; font-size: 1rem;">
-                {% if start_display == end_display %}
-                    Date: {{ start_display }}
-                {% else %}
-                    Range: {{ start_display }} to {{ end_display }}
-                {% endif %}
-            </p>
-        </div>
+    <div class="print-only" style="margin-bottom: 2.5rem; border-bottom: 3px solid #1e293b; padding-bottom: 1.5rem;">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 60px; vertical-align: middle;">
+                    <div style="width: 50px; height: 50px; background: #1e293b; border-radius: 12px; display: block; text-align: center; line-height: 50px;">
+                        <i class="fas fa-graduation-cap" style="color: white; font-size: 24px;"></i>
+                    </div>
+                </td>
+                <td style="vertical-align: middle; padding-left: 15px;">
+                    <h2 style="margin: 0; font-size: 24px; font-weight: 800; color: #1e293b; text-transform: uppercase;">Liquid_Triple_R</h2>
+                    <p style="margin: 0; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase;">Learning Management System</p>
+                </td>
+                <td style="text-align: right; vertical-align: middle;">
+                    <h1 style="margin: 0; color: #1e293b; font-size: 28px; font-weight: 800; text-transform: uppercase;">Attendance Report</h1>
+                    <p style="margin: 5px 0 0; color: #64748b; font-weight: 700; font-size: 14px;">
+                        {% if start_display == end_display %}
+                            Date: {{ start_display }}
+                        {% else %}
+                            Range: {{ start_display }} to {{ end_display }}
+                        {% endif %}
+                    </p>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <div class="header-card">
