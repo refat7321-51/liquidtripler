@@ -312,13 +312,29 @@ def resend_otp(request):
     if not reg_data:
         return redirect('student_register')
 
-    send_mail(
-        subject, 
-        f"Your new OTP is {otp}", 
-        settings.EMAIL_DEFAULT_FROM_EMAIL, 
-        [reg_data['email']],
-        html_message=html_message
-    )
+    # Generate NEW OTP
+    otp = str(random.randint(100000, 999999))
+    request.session['reg_otp'] = otp
+    request.session['otp_expiry'] = (timezone.now() + timezone.timedelta(minutes=10)).isoformat()
+
+    # Send HTML Mail
+    subject = f"Verify your Liquid_Triple_R Account (New OTP) - {otp}"
+    html_message = render_to_string('emails/otp_email.html', {
+        'full_name': reg_data['full_name'],
+        'otp': otp
+    })
+    
+    try:
+        send_email_async(
+            subject,
+            f"Your new OTP is {otp}", 
+            [reg_data['email']],
+            html_message=html_message
+        )
+        messages.success(request, "A new OTP has been sent to your email.")
+    except Exception as e:
+        messages.error(request, f"Failed to send OTP: {str(e)}")
+
     return redirect('verify_otp')
 
 
