@@ -264,13 +264,12 @@ def student_register(request):
 def verify_otp(request):
     reg_data = request.session.get('reg_data')
     correct_otp = request.session.get('reg_otp')
+    otp_expiry = request.session.get('otp_expiry')
     
     if not reg_data or not correct_otp:
         return redirect('student_register')
 
     if request.method == 'POST':
-        # Collect OTP from the 6 separate inputs if used, or a single hidden field
-        # If we use 6 inputs, they might be named otp1, otp2, etc.
         entered_otp = "".join([
             request.POST.get('otp1', ''),
             request.POST.get('otp2', ''),
@@ -280,34 +279,57 @@ def verify_otp(request):
             request.POST.get('otp6', '')
         ])
         
-        # Or if it comes as a single field
         if not entered_otp:
             entered_otp = request.POST.get('otp', '')
 
+        # 1. Check Expiry
+        if otp_expiry:
+            expiry_dt = parse_datetime(otp_expiry)
+            if expiry_dt and timezone.now() > expiry_dt:
+                messages.error(request, "OTP has expired. Please request a new one.")
+                return redirect('student_register')
+
+        # 2. Verify OTP
         if entered_otp == correct_otp:
-            # Create User
-            full_name = reg_data['full_name']
-            email = reg_data['email']
-            password = reg_data['password']
-            parts = full_name.split()
-            
-            user = User.objects.create_user(
-                username=email,
-                email=email,
-                password=password,
-                first_name=parts[0],
-                last_name=' '.join(parts[1:]) if len(parts) > 1 else '',
-            )
-            StudentProfile.objects.create(user=user)
-            
-            # Clear session
-            del request.session['reg_data']
-            del request.session['reg_otp']
-            
-            login(request, user)
-            return redirect('home')
+            try:
+                # Create User
+                full_name = reg_data['full_name']
+                email = reg_data['email']
+                password = reg_data['password']
+                parts = full_name.split()
+                
+                # Check again if user exists to prevent Race Condition
+                if User.objects.filter(username=email).exists():
+                    messages.error(request, "An account with this email already exists.")
+                    return redirect('student_login')
+
+                user = User.objects.create_user(
+                    username=email,
+                    email=email,
+                    password=password,
+                    first_name=parts[0],
+                    last_name=' '.join(parts[1:]) if len(parts) > 1 else '',
+                )
+                StudentProfile.objects.create(user=user)
+                
+                # Clear session
+                for key in ['reg_data', 'reg_otp', 'otp_expiry']:
+                    if key in request.session:
+                        del request.session[key]
+                
+                login(request, user)
+                messages.success(request, f"Welcome {full_name}! Your account has been created.")
+                return redirect('home')
+            except Exception as e:
+                return render(request, 'otp_verify.html', {
+                    'error': f"Error creating account: {str(e)}", 
+                    'email': reg_data['email']
+                })
         else:
-            return render(request, 'otp_verify.html', {'error': 'Invalid OTP. Please try again.', 'email': reg_data['email']})
+            return render(request, 'otp_verify.html', {
+                'error': 'Invalid OTP. Please try again.', 
+                'email': reg_data['email']
+            })
 
     return render(request, 'otp_verify.html', {'email': reg_data['email']})
 
