@@ -117,12 +117,17 @@ def ensure_badges_seeded():
         ('Mastermind', 'high_score', 3, '100% in 3 consecutive quizzes', 'fas fa-brain'),
     ]
     for name, req_type, req_val, desc, icon in badges:
-        Badge.objects.get_or_create(
+        badge_obj, created = Badge.objects.get_or_create(
             name=name,
             requirement_type=req_type,
-            requirement_value=req_val,
-            defaults={'description': desc, 'icon_class': icon}
+            defaults={'requirement_value': req_val, 'description': desc, 'icon_class': icon}
         )
+        if not created:
+            # Update existing if needed
+            badge_obj.requirement_value = req_val
+            badge_obj.description = desc
+            badge_obj.save()
+
 
 def get_badge_data(user):
     from .models import Badge, EarnedBadge, StudentAttempt, ActivityLog, WarningLog, AssignmentSubmission, Attendance
@@ -175,6 +180,7 @@ def get_badge_data(user):
         elif badge.requirement_type == 'high_score' or badge.requirement_type == 'perfect_score_count':
             current_val = streak
             target_val = 3
+
         elif badge.requirement_type == 'total_tab_switches' or badge.requirement_type == 'warning_count':
             from django.db.models import Sum
             current_val = StudentAttempt.objects.filter(student=user).aggregate(Sum('tab_switch_count'))['tab_switch_count__sum'] or 0
@@ -1370,22 +1376,56 @@ def student_dashboard(request):
     recent_activities = ActivityLog.objects.filter(user=request.user).order_by('-timestamp')[:50] # Get more for filtering if needed
     
     # --- Gamification & Badges ---
-    badge_progress = get_badge_data(request.user)
-    total_marks, my_rank = get_user_ranking_stats(request.user)
+    all_badges = Badge.objects.all()
+    earned_badge_ids = set(EarnedBadge.objects.filter(user=request.user).values_list('badge_id', flat=True))
+    
+    total_score, rank = get_user_ranking_stats(request.user)
+    
+    badges_data = []
+    for badge in all_badges:
+        is_earned = badge.id in earned_badge_ids
+        progress = 0
+        status_text = ""
+        
+        if is_earned:
+            progress = 100
+            status_text = "Completed!"
+        else:
+            if badge.requirement_type == 'quiz_count':
+                count = StudentAttempt.objects.filter(student=request.user, is_submitted=True).count()
+                progress = min(round((count / badge.requirement_value) * 100), 99)
+                status_text = f"{count}/{badge.requirement_value} Quizzes"
+            elif badge.requirement_type == 'total_score_threshold':
+                progress = min(round((total_score / badge.requirement_value) * 100), 99)
+                status_text = f"{total_score}/{badge.requirement_value} Points"
+            elif badge.requirement_type == 'resource_download':
+                count = ActivityLog.objects.filter(user=request.user, action='Downloaded Resource').count()
+                progress = min(round((count / badge.requirement_value) * 100), 99)
+                status_text = f"{count}/{badge.requirement_value} Resources"
+            elif badge.requirement_type == 'leaderboard_rank':
+                status_text = f"Rank: #{rank}"
+                progress = 100 if rank <= badge.requirement_value else 0
+            else:
+                progress = 0
+                status_text = "Keep going!"
+
+        badges_data.append({
+            'badge': badge,
+            'is_earned': is_earned,
+            'progress': progress,
+            'status_text': status_text
+        })
+    
+    badges_data.sort(key=lambda x: -x['is_earned'])
 
     # --- Quiz List with Status ---
     quizzes = Quiz.objects.filter(is_published=True).order_by('-created_at')
     quiz_list_with_status = []
     for q in quizzes:
-        # Check if already submitted
         attempt = StudentAttempt.objects.filter(student=request.user, quiz=q, is_submitted=True).first()
         is_expired = q.expires_at and q.expires_at < now
-        
         quiz_list_with_status.append({
-            'quiz': q,
-            'is_submitted': attempt is not None,
-            'is_expired': is_expired,
-            'attempt_id': attempt.id if attempt else None
+            'quiz': q, 'is_submitted': attempt is not None, 'is_expired': is_expired, 'attempt_id': attempt.id if attempt else None
         })
 
     context = {
@@ -1402,12 +1442,13 @@ def student_dashboard(request):
         'assignment_p': assignment_p,
         'upcoming_quizzes': upcoming_quizzes,
         'recent_activities': recent_activities,
-        'badge_progress': badge_progress,
-        'total_marks': total_marks,
+        'badge_progress': badges_data,
+        'total_marks': total_score,
         'quiz_list': quiz_list_with_status,
         'latest_notices': Notice.objects.all()[:3],
     }
     return render(request, 'home.html', context)
+
 
 
 @login_required
