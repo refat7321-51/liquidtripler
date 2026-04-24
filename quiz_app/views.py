@@ -686,8 +686,8 @@ def student_profile(request):
             'remaining': max(0, target_val - current_val) if badge.requirement_type != 'leaderboard_rank' else (max(0, current_val - target_val) if current_val > 0 else target_val)
         })
 
-    # Sort badges: Completed ones first
-    badge_progress.sort(key=lambda x: (not x['is_earned'], x['badge'].id))
+    # Sort badges: Earned badges first, then by progress percentage
+    badge_progress.sort(key=lambda x: (not x['is_earned'], -x['percent']))
 
     context = {
         'student': request.user,
@@ -1572,8 +1572,8 @@ def student_dashboard(request):
             'status_text': status_text
         })
     
-    # Sort badges: Earned badges first
-    badges_data.sort(key=lambda x: -x['is_earned'])
+    # Sort badges: Earned badges first, then by progress percentage
+    badges_data.sort(key=lambda x: (not x['is_earned'], -x['progress']))
 
     context = {
         'profile': profile,
@@ -2102,6 +2102,9 @@ def admin_student_progress(request, user_id):
             'current_val': current_val,
             'percent': int(percent)
         })
+
+    # Sort badges: Earned badges first, then by percent
+    badge_progress.sort(key=lambda x: (not x['is_earned'], -x['percent']))
 
     context = {
         'target_user': target_user,
