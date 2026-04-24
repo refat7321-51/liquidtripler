@@ -10,10 +10,10 @@
 
         <!-- Student info banner — no name input needed -->
         <div class="student-banner">
-            {% if request.user.student_profile.profile_image %}
+            {% if not request.user.is_staff and request.user.student_profile.profile_image %}
                 <img src="{{ request.user.student_profile.profile_image.url }}" class="banner-avatar-img" alt="profile">
             {% else %}
-                <div class="banner-avatar-letter">{{ request.user.first_name|first|upper }}</div>
+                <div class="banner-avatar-letter">{{ request.user.first_name|first|upper|default:request.user.username|first|upper }}</div>
             {% endif %}
             <div>
                 <div class="banner-name">{{ request.user.get_full_name|default:request.user.email }}</div>

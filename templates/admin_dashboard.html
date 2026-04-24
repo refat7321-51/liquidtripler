@@ -736,7 +736,7 @@
                 <tr id="row-{{ attempt.id }}">
                     <td>
                         <div class="ad-cell">
-                            {% if attempt.student and attempt.student.student_profile.profile_image %}
+                            {% if attempt.student and not attempt.student.is_staff and attempt.student.student_profile.profile_image %}
                             <img src="{{ attempt.student.student_profile.profile_image.url }}" class="ad-av-img">
                             {% else %}
                             <div class="ad-av">{{ attempt.student_name|slice:":1"|upper }}</div>
@@ -770,7 +770,7 @@
         {% if attempt.is_submitted %}
         <div class="ad-m-card" id="m-row-{{ attempt.id }}">
             <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
-                {% if attempt.student and attempt.student.student_profile.profile_image %}
+                {% if attempt.student and not attempt.student.is_staff and attempt.student.student_profile.profile_image %}
                 <img src="{{ attempt.student.student_profile.profile_image.url }}" class="ad-av-img">
                 {% else %}
                 <div class="ad-av">{{ attempt.student_name|slice:":1"|upper }}</div>

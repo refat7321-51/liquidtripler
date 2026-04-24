@@ -39,7 +39,9 @@
                                 </div>
                                 <div>
                                     <div style="font-weight: 700; color: #1e293b;">{{ sub.student.get_full_name }}</div>
+                                    {% if not sub.student.is_staff and sub.student.student_profile %}
                                     <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">ID: {{ sub.student.student_profile.student_id }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </td>
