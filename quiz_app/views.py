@@ -832,10 +832,6 @@ def toggle_quiz_publish(request, quiz_id):
     quiz.save()
     
     if not was_published and quiz.is_published:
-        Notice.objects.create(
-            title=f"New Quiz Available: {quiz.title}",
-            content=f"The quiz '{quiz.title}' is now open and available for you to take. Good luck!"
-        )
         messages.success(request, f"Quiz '{quiz.title}' published successfully! Students have been notified.")
     elif was_published and not quiz.is_published:
         messages.success(request, f"Quiz '{quiz.title}' is now hidden from students.")
