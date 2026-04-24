@@ -201,22 +201,27 @@ def check_badges(user):
             EarnedBadge.objects.get_or_create(user=user, badge=badge)
 
     # 10. Early Bird (requirement_type='early_bird_quiz', value=5)
-    # Count quizzes submitted within 1 hour of quiz being published/created
     early_bird_badge = Badge.objects.filter(requirement_type='early_bird_quiz').first()
     if early_bird_badge:
-        submitted_attempts = StudentAttempt.objects.filter(
-            student=user, is_submitted=True
-        ).select_related('quiz')
-        early_count = 0
-        for attempt in submitted_attempts:
-            quiz = attempt.quiz
-            # Use quiz published time (created_at as fallback)
-            publish_time = quiz.created_at
-            if attempt.submitted_at and publish_time:
-                diff = attempt.submitted_at - publish_time
-                if 0 <= diff.total_seconds() <= 3600:  # within 1 hour
-                    early_count += 1
-        if early_count >= early_bird_badge.requirement_value:
+        from django.utils import timezone
+        all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
+        attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=user, is_submitted=True)}
+        
+        current_streak = 0
+        max_streak = 0
+        now = timezone.now()
+        for quiz in all_quizzes:
+            attempt = attempts_dict.get(quiz.id)
+            if attempt and attempt.submitted_at:
+                diff = attempt.submitted_at - quiz.created_at
+                if 0 <= diff.total_seconds() <= 3600:
+                    current_streak += 1
+                    max_streak = max(max_streak, current_streak)
+                    continue
+            if (now - quiz.created_at).total_seconds() > 3600:
+                current_streak = 0
+                
+        if max_streak >= early_bird_badge.requirement_value:
             EarnedBadge.objects.get_or_create(user=user, badge=early_bird_badge)
 
 
@@ -670,17 +675,21 @@ def student_profile(request):
             current_val = streak
             target_val = badge.requirement_value
         elif badge.requirement_type == 'early_bird_quiz':
-            submitted = StudentAttempt.objects.filter(
-                student=request.user, is_submitted=True
-            ).select_related('quiz')
-            early_count = 0
-            for attempt in submitted:
-                publish_time = attempt.quiz.created_at
-                if attempt.submitted_at and publish_time:
-                    diff = attempt.submitted_at - publish_time
+            from django.utils import timezone
+            all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
+            attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=request.user, is_submitted=True)}
+            current_streak = 0
+            now = timezone.now()
+            for quiz in all_quizzes:
+                attempt = attempts_dict.get(quiz.id)
+                if attempt and attempt.submitted_at:
+                    diff = attempt.submitted_at - quiz.created_at
                     if 0 <= diff.total_seconds() <= 3600:
-                        early_count += 1
-            current_val = early_count
+                        current_streak += 1
+                        continue
+                if (now - quiz.created_at).total_seconds() > 3600:
+                    current_streak = 0
+            current_val = current_streak
             target_val = badge.requirement_value
         else:
             current_val = 1 if is_earned else 0
@@ -709,7 +718,7 @@ def student_profile(request):
             else: req_text = "Reach Top 3"
         elif badge.requirement_type == 'high_score': req_text = "Get 100% in a Quiz"
         elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
-        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
+        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} consecutive Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
         elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
         
@@ -1556,10 +1565,13 @@ def student_dashboard(request):
         is_earned = badge.id in earned_badge_ids
         progress = 0
         status_text = ""
+        current_val = 0
+        target_val = badge.requirement_value
         
         if is_earned:
             progress = 100
             status_text = "Completed!"
+            current_val = target_val
         else:
             if badge.requirement_type == 'quiz_count':
                 count = StudentAttempt.objects.filter(
@@ -1567,13 +1579,16 @@ def student_dashboard(request):
                 ).extra(where=["score = total_questions AND total_questions > 0"]).count()
                 progress = min(round((count / badge.requirement_value) * 100), 99)
                 status_text = f"{count}/{badge.requirement_value} Quizzes"
+                current_val = count
             elif badge.requirement_type == 'total_score_threshold':
                 progress = min(round((total_score / badge.requirement_value) * 100), 99)
                 status_text = f"{total_score}/{badge.requirement_value} Points"
+                current_val = total_score
             elif badge.requirement_type == 'resource_download':
                 count = ActivityLog.objects.filter(user=request.user, action='Downloaded Resource').count()
                 progress = min(round((count / badge.requirement_value) * 100), 99)
                 status_text = f"{count}/{badge.requirement_value} Resources"
+                current_val = count
             elif badge.requirement_type == 'leaderboard_rank':
                 # Rank progress: 100% only if they hit that EXACT rank or better
                 if rank > 0 and rank <= badge.requirement_value:
@@ -1587,6 +1602,7 @@ def student_dashboard(request):
                 else:
                     progress = 0
                 status_text = f"Current Rank: #{rank}"
+                current_val = rank
             elif badge.requirement_type == 'consistency_streak':
                 last_3 = StudentAttempt.objects.filter(student=request.user, is_submitted=True).order_by('-submitted_at')[:3]
                 count = 0
@@ -1595,11 +1611,13 @@ def student_dashboard(request):
                         count += 1
                 progress = min(round((count / badge.requirement_value) * 100), 99)
                 status_text = f"{count}/{badge.requirement_value} High Scores"
+                current_val = count
             elif badge.requirement_type == 'total_tab_switches':
                 from django.db.models import Sum
                 total_switches = StudentAttempt.objects.filter(student=request.user).aggregate(Sum('tab_switch_count'))['tab_switch_count__sum'] or 0
                 progress = min(round((total_switches / badge.requirement_value) * 100), 99)
                 status_text = f"{total_switches}/{badge.requirement_value} Tab Switches"
+                current_val = total_switches
             elif badge.requirement_type == 'assignment_full_marks':
                 from django.db.models import F
                 count = AssignmentSubmission.objects.filter(
@@ -1607,9 +1625,31 @@ def student_dashboard(request):
                 ).count()
                 progress = min(round((count / badge.requirement_value) * 100), 99)
                 status_text = f"{count}/{badge.requirement_value} Perfect Assignments"
+                current_val = count
+            elif badge.requirement_type == 'early_bird_quiz':
+                from django.utils import timezone
+                all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
+                attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=request.user, is_submitted=True)}
+                current_streak = 0
+                now = timezone.now()
+                for quiz in all_quizzes:
+                    attempt = attempts_dict.get(quiz.id)
+                    if attempt and attempt.submitted_at:
+                        diff = attempt.submitted_at - quiz.created_at
+                        if 0 <= diff.total_seconds() <= 3600:
+                            current_streak += 1
+                            continue
+                    if (now - quiz.created_at).total_seconds() > 3600:
+                        current_streak = 0
+                progress = min(round((current_streak / badge.requirement_value) * 100), 99)
+                status_text = f"{current_streak}/{badge.requirement_value} Streak"
+                current_val = current_streak
             else:
                 progress = 0
                 status_text = "Not earned yet"
+                current_val = 0
+                
+            target_val = badge.requirement_value
 
         # Add requirement text
         req_text = ""
@@ -1622,7 +1662,7 @@ def student_dashboard(request):
             else: req_text = "Reach Top 3"
         elif badge.requirement_type == 'high_score': req_text = "Get 100% in a Quiz"
         elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
-        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
+        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} consecutive Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
         elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
 
@@ -2155,6 +2195,22 @@ def admin_student_progress(request, user_id):
                 is_earned = True
         elif badge.requirement_type == 'high_score':
             current_val = StudentAttempt.objects.filter(student=target_user, is_submitted=True).aggregate(max_score=Max('score'))['max_score'] or 0
+        elif badge.requirement_type == 'early_bird_quiz':
+            from django.utils import timezone
+            all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
+            attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=target_user, is_submitted=True)}
+            current_streak = 0
+            now = timezone.now()
+            for quiz in all_quizzes:
+                attempt = attempts_dict.get(quiz.id)
+                if attempt and attempt.submitted_at:
+                    diff = attempt.submitted_at - quiz.created_at
+                    if 0 <= diff.total_seconds() <= 3600:
+                        current_streak += 1
+                        continue
+                if (now - quiz.created_at).total_seconds() > 3600:
+                    current_streak = 0
+            current_val = current_streak
 
         # Calculate percentage
         percent = 0
@@ -2178,7 +2234,7 @@ def admin_student_progress(request, user_id):
             else: req_text = "Reach Top 3"
         elif badge.requirement_type == 'high_score': req_text = "Get 100% in a Quiz"
         elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
-        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} Quizzes within 1 hour"
+        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} consecutive Quizzes within 1 hour"
         elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
         elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
 
