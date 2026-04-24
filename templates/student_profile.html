@@ -252,19 +252,41 @@ function previewImage(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();
         reader.onload = function(e) {
-            var img = document.getElementById('avatarImg');
-            var letter = document.getElementById('avatarLetter');
-            if (img) img.src = e.target.result;
-            if (letter) {
-                letter.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">';
-                letter.style.background = 'transparent';
-                letter.style.border = 'none';
+            const newImgUrl = e.target.result;
+            
+            // 1. Update Main Profile Page Image
+            const mainImg = document.getElementById('avatarImg');
+            const mainLetter = document.getElementById('avatarLetter');
+            if (mainImg) mainImg.src = newImgUrl;
+            if (mainLetter) {
+                mainLetter.innerHTML = `<img src="${newImgUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                mainLetter.style.background = 'transparent';
+                mainLetter.style.border = 'none';
+            }
+
+            // 2. Update Sidebar Image
+            const sidebarImg = document.getElementById('sidebarAvatarImg');
+            const sidebarLetter = document.getElementById('sidebarAvatarLetter');
+            if (sidebarImg) sidebarImg.src = newImgUrl;
+            if (sidebarLetter) {
+                sidebarLetter.innerHTML = `<img src="${newImgUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                sidebarLetter.style.background = 'transparent';
+            }
+
+            // 3. Update Navbar Image
+            const navbarImg = document.getElementById('navbarAvatarImg');
+            const navbarLetter = document.getElementById('navbarAvatarLetter');
+            if (navbarImg) navbarImg.src = newImgUrl;
+            if (navbarLetter) {
+                navbarLetter.innerHTML = `<img src="${newImgUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                navbarLetter.style.background = 'transparent';
             }
         };
         reader.readAsDataURL(input.files[0]);
     }
 }
 </script>
+
 
 <!-- Mobile Adjustments -->
 <style>

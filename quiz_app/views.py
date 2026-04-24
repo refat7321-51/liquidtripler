@@ -405,6 +405,14 @@ def student_profile(request):
 
     profile, _ = StudentProfile.objects.get_or_create(user=request.user)
 
+    # --- Auto-Seed Badges (Runs once to ensure badges exist) ---
+    from .models import Badge
+    if Badge.objects.count() == 0:
+        Badge.objects.get_or_create(name='Quiz Master', description='Complete 5 quizzes', requirement_type='quiz_count', requirement_value=5, icon_class='fas fa-graduation-cap')
+        Badge.objects.get_or_create(name='Top Ranker', description='Reach Rank 1', requirement_type='leaderboard_rank', requirement_value=1, icon_class='fas fa-crown')
+        Badge.objects.get_or_create(name='Point Millionaire', description='Earn 1000 total points', requirement_type='total_score_threshold', requirement_value=1000, icon_class='fas fa-coins')
+        Badge.objects.get_or_create(name='Resource Hunter', description='Download 5 resources', requirement_type='resource_download', requirement_value=5, icon_class='fas fa-book')
+
     if request.method == 'POST':
         full_name = request.POST.get('full_name', '').strip()
         if full_name:
