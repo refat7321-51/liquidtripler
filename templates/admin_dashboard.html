@@ -410,8 +410,8 @@
     .ad-act { padding: 4px 10px; font-size: 0.72rem; }
     
     .ad-panel { 
-        display: none !important; 
-        animation: none !important; /* Disable animation on mobile to prevent disappearing */
+        display: none; 
+        animation: none !important; 
     }
     .ad-panel.active { 
         display: block !important; 
@@ -457,7 +457,18 @@
 
 @media(max-width:768px){
     .ad-tbl-wrap { display: none !important; }
-    .ad-mobile-cards { display: flex !important; }
+    .ad-mobile-cards { 
+        display: flex !important; 
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 200px; /* Force some height */
+    }
+    
+    .ad-panel.active {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
 }
 </style>
 {% endblock %}
@@ -963,10 +974,37 @@ function toggleQuizzes() {
 }
 
 function admSwitch(name, btn) {
-    document.querySelectorAll('.ad-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.ad-tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('adp-' + name).classList.add('active');
-    btn.classList.add('active');
+    try {
+        console.log('Switching to:', name);
+        // Hide all panels
+        const panels = document.querySelectorAll('.ad-panel');
+        panels.forEach(p => {
+            p.classList.remove('active');
+            p.style.setProperty('display', 'none', 'important');
+        });
+
+        // Deactivate all tab buttons
+        const buttons = document.querySelectorAll('.ad-tab-btn');
+        buttons.forEach(b => b.classList.remove('active'));
+
+        // Activate target panel
+        const target = document.getElementById('adp-' + name);
+        if (target) {
+            target.classList.add('active');
+            target.style.setProperty('display', 'block', 'important');
+            console.log('Panel activated:', 'adp-' + name);
+        }
+
+        // Activate button
+        if (btn) btn.classList.add('active');
+        
+        // Scroll to content on mobile for better UX
+        if (window.innerWidth <= 768 && target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    } catch (err) {
+        console.error('Tab switch error:', err);
+    }
 }
 
 /* ── Progress bars ─────── */
@@ -1060,12 +1098,18 @@ function getCookie(name) {
 }
 
 // Ensure the first tab is active on mobile load and fix disappearing issue
-window.addEventListener('DOMContentLoaded', (event) => {
+function initDashboard() {
+    console.log('Initializing Dashboard...');
     const firstTab = document.querySelector('.ad-tab-btn');
-    if (firstTab && window.innerWidth <= 768) {
+    if (firstTab) {
         admSwitch('quizzes', firstTab);
     }
-});
+}
+
+// Run on multiple events to be sure
+window.addEventListener('DOMContentLoaded', initDashboard);
+window.addEventListener('load', initDashboard);
+if (document.readyState === 'complete') initDashboard();
 
 // Removed auto-reload to prevent flickering/disappearing issues on mobile
 // setInterval(() => location.reload(), 30000);
