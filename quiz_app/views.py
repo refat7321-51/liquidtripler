@@ -656,15 +656,17 @@ def admin_login(request):
         if password == '730323':
             if username in admin_usernames:
                 user = User.objects.filter(username=username).first()
-                if user:
-                    if user.is_staff:
-                        user.backend = 'django.contrib.auth.backends.ModelBackend'
-                        login(request, user)
-                        return redirect('admin_dashboard')
-                    else:
-                        return render(request, 'admin_login.html', {'error': f'User {username} is not a staff member'})
+                if not user:
+                    # Automatically create the user if it doesn't exist in this database
+                    user = User.objects.create_superuser(username=username, email=f"{username}@example.com", password=password)
+                
+                if user.is_staff:
+                    # Explicitly set the backend for manual login
+                    user.backend = 'django.contrib.auth.backends.ModelBackend'
+                    login(request, user)
+                    return redirect('admin_dashboard')
                 else:
-                    return render(request, 'admin_login.html', {'error': f'User {username} not found in database'})
+                    return render(request, 'admin_login.html', {'error': f'User {username} is not a staff member'})
             # If password is correct but username not in list, continue to authenticate
 
         user = authenticate(request, username=username, password=password)
