@@ -261,9 +261,7 @@
             50% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); border-color: #f59e0b; }
             100% { box-shadow: 0 0 5px rgba(251, 191, 36, 0.2); border-color: #fbbf24; }
         }
-        @media (max-width: 600px) {
-            #dashboardBadgeGrid { grid-template-columns: 1fr !important; }
-        }
+        /* Removed mobile 1-column override to keep 2 badges per row as requested */
     </style>
 
     <script>
