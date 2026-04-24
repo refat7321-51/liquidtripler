@@ -123,10 +123,11 @@ def check_badges(user):
         badge = Badge.objects.filter(requirement_type='total_score_threshold', requirement_value=150).first()
         if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
 
-    # 5. Top 3 Contender (requirement_type='leaderboard_rank', value=3)
-    if rank <= 3:
-        badge = Badge.objects.filter(requirement_type='leaderboard_rank', requirement_value=3).first()
-        if badge: EarnedBadge.objects.get_or_create(user=user, badge=badge)
+    # 5. Leaderboard Rank Badges (requirement_type='leaderboard_rank')
+    rank_badges = Badge.objects.filter(requirement_type='leaderboard_rank')
+    for b in rank_badges:
+        if rank > 0 and rank <= b.requirement_value:
+            EarnedBadge.objects.get_or_create(user=user, badge=b)
 
     # 6. No Penalty Hero (requirement_type='no_penalty_full_score', value=0)
     no_penalty_full = StudentAttempt.objects.filter(student=user, is_submitted=True, tab_switch_count=0)
@@ -527,8 +528,26 @@ def student_profile(request):
 
     # --- Badge Progress Tracking ---
     from .models import Badge
-    all_badges = Badge.objects.all()
+    all_badges = list(Badge.objects.all())
     earned_badge_ids = set(earned_badges.values_list('badge_id', flat=True))
+    
+    # Filter leaderboard rank badges
+    rank_badges = [b for b in all_badges if b.requirement_type == 'leaderboard_rank']
+    other_badges = [b for b in all_badges if b.requirement_type != 'leaderboard_rank']
+    
+    selected_rank_badge = None
+    if rank_badges:
+        rank_badges.sort(key=lambda b: b.requirement_value)
+        if my_rank and my_rank <= 3:
+            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == my_rank), None)
+            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
+        else:
+            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == 3), None)
+            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
+            
+    all_badges_to_process = other_badges
+    if selected_rank_badge:
+        all_badges_to_process.append(selected_rank_badge)
     
     badge_progress = []
     
@@ -536,7 +555,7 @@ def student_profile(request):
     q_count = StudentAttempt.objects.filter(student=request.user, is_submitted=True).count()
     res_count = ActivityLog.objects.filter(user=request.user, action='Downloaded Resource').count()
     
-    for badge in all_badges:
+    for badge in all_badges_to_process:
         is_earned = badge.id in earned_badge_ids
         current_val = 0
         target_val = badge.requirement_value
@@ -589,7 +608,11 @@ def student_profile(request):
 
         # Calculate percentage (capped at 100)
         if badge.requirement_type == 'leaderboard_rank':
-            percent = 100 if (my_rank and my_rank <= target_val) else (20 if my_rank else 0)
+            # Progress shows: current rank / target rank. 
+            # If my_rank is 5, target is 3. We want to show "5 / 3", but percent should be calculated properly.
+            # But template does: {{ item.current_val }} / {{ item.target_val }}
+            # For rank, progress is technically "earned" if current <= target.
+            percent = 100 if is_earned else (20 if my_rank else 0)
         else:
             percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
             
@@ -599,8 +622,11 @@ def student_profile(request):
             'current_val': current_val,
             'target_val': target_val,
             'percent': percent,
-            'remaining': max(0, target_val - current_val)
+            'remaining': max(0, target_val - current_val) if badge.requirement_type != 'leaderboard_rank' else (max(0, current_val - target_val) if current_val > 0 else target_val)
         })
+
+    # Sort badges: Completed ones first
+    badge_progress.sort(key=lambda x: (not x['is_earned'], x['badge'].id))
 
     context = {
         'student': request.user,
