@@ -651,33 +651,32 @@ def admin_login(request):
         username = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password', '')
         
-        # DEBUG PRINTS - Will show in your terminal
-        print(f"\n--- LOGIN ATTEMPT ---")
-        print(f"Username: {username}")
-        print(f"Password: {password}")
-        
         # Hardcoded check for admin users as requested
         admin_usernames = ['admin_refat', 'admin_ridoy', 'admin_rafi']
-        if password == '730323' and username in admin_usernames:
-            user = User.objects.filter(username=username).first()
-            if user:
-                print(f"Found user: {user.username}, is_staff: {user.is_staff}")
-                if user.is_staff:
-                    user.backend = 'django.contrib.auth.backends.ModelBackend'
-                    login(request, user)
-                    print("Login successful (hardcoded)!")
-                    return redirect('admin_dashboard')
+        if password == '730323':
+            if username in admin_usernames:
+                user = User.objects.filter(username=username).first()
+                if user:
+                    if user.is_staff:
+                        user.backend = 'django.contrib.auth.backends.ModelBackend'
+                        login(request, user)
+                        return redirect('admin_dashboard')
+                    else:
+                        return render(request, 'admin_login.html', {'error': f'User {username} is not a staff member'})
+                else:
+                    return render(request, 'admin_login.html', {'error': f'User {username} not found in database'})
+            # If password is correct but username not in list, continue to authenticate
 
         user = authenticate(request, username=username, password=password)
-        print(f"Authenticate result: {user}")
 
         if user is not None and user.is_staff:
             login(request, user)
-            print("Login successful (authenticate)!")
             return redirect('admin_dashboard')
         else:
-            print("Login failed!")
-            return render(request, 'admin_login.html', {'error': 'Invalid credentials or not an admin user'})
+            error_msg = 'Invalid credentials or not an admin user'
+            if user and not user.is_staff:
+                error_msg = 'This account exists but does not have admin access'
+            return render(request, 'admin_login.html', {'error': error_msg})
 
     return render(request, 'admin_login.html')
 
