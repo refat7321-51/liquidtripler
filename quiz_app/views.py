@@ -488,10 +488,16 @@ def student_login(request):
         email = request.POST.get('email', '').strip().lower()
         password = request.POST.get('password', '')
         user = authenticate(request, username=email, password=password)
-
-        if user is not None and not user.is_staff:
-            login(request, user)
-            return redirect('home')
+        
+        if user is not None:
+            if not user.is_staff:
+                login(request, user)
+                return redirect('home')
+            else:
+                return render(request, 'student_login.html', {
+                    'error': 'This is an Admin account. Please use the Admin Login portal.',
+                    'is_admin_error': True
+                })
         else:
             return render(request, 'student_login.html', {'error': 'Invalid email or password.'})
 
@@ -720,13 +726,14 @@ def admin_login(request):
 
         user = authenticate(request, username=username, password=password)
 
-        if user is not None and user.is_staff:
-            login(request, user)
-            return redirect('admin_dashboard')
+        if user is not None:
+            if user.is_staff:
+                login(request, user)
+                return redirect('admin_dashboard')
+            else:
+                return render(request, 'admin_login.html', {'error': 'This is a Student account. Admins only.'})
         else:
-            error_msg = 'Invalid credentials or not an admin user'
-            if user and not user.is_staff:
-                error_msg = 'This account exists but does not have admin access'
+            error_msg = 'Invalid credentials or account does not exist.'
             return render(request, 'admin_login.html', {'error': error_msg})
 
     return render(request, 'admin_login.html')

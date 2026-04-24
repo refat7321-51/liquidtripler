@@ -23,6 +23,14 @@
         <div class="alert-error">
             <i class="fas fa-exclamation-circle"></i> {{ error }}
         </div>
+        {% if is_admin_error %}
+        <div style="margin-bottom: 1.5rem; text-align: center;">
+            <a href="{% url 'admin_login' %}" class="btn-primary-glow" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); text-decoration: none;">
+                <i class="fas fa-shield-halved"></i>
+                Go to Admin Login
+            </a>
+        </div>
+        {% endif %}
         {% endif %}
 
         {% if success %}
