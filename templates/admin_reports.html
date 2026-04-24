@@ -51,7 +51,7 @@
                         <div>
                             {% with report=quiz_reports|get_item:quiz.id %}
                                 {% if report %}
-                                    <a href="{{ report.report_file.url }}" target="_blank" 
+                                    <a href="{{ report.report_file.url }}" target="_blank" download
                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 0.6rem 1rem; background: #2563eb; color: white; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2);"
                                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(37,99,235,0.3)';"
                                        onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(37,99,235,0.2)';">
@@ -103,7 +103,7 @@
                         <div>
                             {% with report=assignment_reports|get_item:ass.id %}
                                 {% if report %}
-                                    <a href="{{ report.report_file.url }}" target="_blank" 
+                                    <a href="{{ report.report_file.url }}" target="_blank" download
                                        style="display: inline-flex; align-items: center; gap: 6px; padding: 0.6rem 1rem; background: #d97706; color: white; border-radius: 0.75rem; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(217,119,6,0.2);"
                                        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 15px rgba(217,119,6,0.3)';"
                                        onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 12px rgba(217,119,6,0.2)';">
