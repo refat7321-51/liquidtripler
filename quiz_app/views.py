@@ -471,6 +471,58 @@ def student_profile(request):
     # Earned Badges
     earned_badges = EarnedBadge.objects.filter(user=request.user).select_related('badge')
 
+    # --- Badge Progress Tracking ---
+    from .models import Badge
+    all_badges = Badge.objects.all()
+    earned_badge_ids = set(earned_badges.values_list('badge_id', flat=True))
+    
+    badge_progress = []
+    
+    # Pre-calculate common stats for efficiency
+    q_count = StudentAttempt.objects.filter(student=request.user, is_submitted=True).count()
+    res_count = ActivityLog.objects.filter(user=request.user, action='Downloaded Resource').count()
+    
+    for badge in all_badges:
+        is_earned = badge.id in earned_badge_ids
+        current_val = 0
+        target_val = badge.requirement_value
+        
+        if badge.requirement_type == 'quiz_count':
+            current_val = q_count
+        elif badge.requirement_type == 'resource_download':
+            current_val = res_count
+        elif badge.requirement_type == 'total_score_threshold':
+            current_val = total_marks
+        elif badge.requirement_type == 'leaderboard_rank':
+            # For rank, lower is better. We'll show progress towards target rank.
+            current_val = my_rank if my_rank else 0
+            # Target is usually 1, 3, or 5. If my_rank <= target, it's 100%.
+        elif badge.requirement_type == 'high_score':
+            # Check if any full score exists
+            full_score_exists = StudentAttempt.objects.filter(
+                student=request.user, is_submitted=True
+            ).extra(where=["score = total_questions AND total_questions > 0"]).exists()
+            current_val = 1 if full_score_exists else 0
+            target_val = 1
+        else:
+            # For others, if earned show 1/1, else 0/1
+            current_val = 1 if is_earned else 0
+            target_val = 1
+
+        # Calculate percentage (capped at 100)
+        if badge.requirement_type == 'leaderboard_rank':
+            percent = 100 if (my_rank and my_rank <= target_val) else (20 if my_rank else 0)
+        else:
+            percent = min(100, int((current_val / target_val) * 100)) if target_val > 0 else 0
+            
+        badge_progress.append({
+            'badge': badge,
+            'is_earned': is_earned,
+            'current_val': current_val,
+            'target_val': target_val,
+            'percent': percent
+        })
+
     context = {
         'student': request.user,
         'profile': profile,
@@ -479,6 +531,7 @@ def student_profile(request):
         'total_students': len(temp),
         'total_marks': total_marks,
         'earned_badges': earned_badges,
+        'badge_progress': badge_progress, # New: tracking list
         'attendance_count': att_count_self,
     }
     return render(request, 'student_profile.html', context)

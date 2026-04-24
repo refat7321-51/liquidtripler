@@ -281,8 +281,6 @@
         }
 
         @media (max-width: 768px) {
-
-        @media (max-width: 768px) {
             .container { padding: 1.25rem 1rem; }
             .top-navbar { padding: 0 1.25rem; }
             .brand-logo { font-size: 1.15rem; }
@@ -446,6 +444,12 @@
                         </a>
                     </li>
                     {% endif %}
+                    
+                    <li class="sidebar-item" style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem; margin-bottom: 2rem;">
+                        <a href="/logout/" id="logoutBtn" class="sidebar-link" style="color: #fca5a5 !important;">
+                            <div><i class="fas fa-power-off"></i> <span>Logout Now</span></div>
+                        </a>
+                    </li>
                 {% else %}
                     <li class="sidebar-item">
                         <a href="/login/" class="sidebar-link">
@@ -454,17 +458,6 @@
                     </li>
                 {% endif %}
             </ul>
-
-            {% if not user.is_staff and user.is_authenticated %}
-            <div style="padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.4); flex-shrink: 0;">
-                <a href="/logout/"
-                   id="logoutBtn"
-                   style="display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1.25rem; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 12px; color: #fca5a5; text-decoration: none; font-weight: 700; font-size: 0.9rem; transition: all 0.2s;">
-                    <i class="fas fa-power-off" style="font-size: 0.9rem;"></i>
-                    <span>Logout Now</span>
-                </a>
-            </div>
-            {% endif %}
         </aside>
         {% endblock %}
 
@@ -637,41 +630,54 @@
             z-index: 9999;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
         }
-        .custom-modal-overlay.active { opacity: 1; visibility: visible; }
-        
+        .custom-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
         .custom-modal-card {
             background: white;
-            padding: 2.5rem;
+            padding: 2.5rem 2rem;
             border-radius: 1.5rem;
-            width: 100%;
+            width: 90%;
             max-width: 400px;
             text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             transform: scale(0.9);
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            border: 1px solid rgba(255,255,255,0.7);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
         }
-        .custom-modal-overlay.active .custom-modal-card { transform: scale(1); }
-
+        .custom-modal-overlay.active .custom-modal-card {
+            transform: scale(1);
+        }
         .custom-modal-icon {
-            width: 60px; height: 60px;
-            background: #fef2f2;
+            width: 64px;
+            height: 64px;
+            background: #fff1f2;
             color: #ef4444;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.75rem;
-            border-radius: 50%;
             margin: 0 auto 1.5rem;
         }
-
-        .custom-modal-card h3 { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.75rem; }
-        .custom-modal-card p { font-size: 0.95rem; color: #64748b; line-height: 1.5; margin-bottom: 2rem; }
-
-        .custom-modal-actions { display: flex; gap: 1rem; }
-        
+        .custom-modal-card h3 {
+            margin: 0 0 0.75rem;
+            color: #1e293b;
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+        .custom-modal-card p {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0 0 2rem;
+        }
+        .custom-modal-actions {
+            display: flex;
+            gap: 1rem;
+        }
         .modal-btn {
             flex: 1;
             padding: 0.75rem;
@@ -682,84 +688,93 @@
             transition: all 0.2s;
             border: none;
         }
-        .btn-cancel { background: #f1f5f9; color: #475569; }
-        .btn-cancel:hover { background: #e2e8f0; }
-        
-        .btn-confirm { background: #ef4444; color: white; }
-        .btn-confirm:hover { background: #dc2626; transform: scale(1.02); }
+        .btn-cancel {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        .btn-cancel:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .btn-confirm {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-confirm:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
     </style>
 
     <script>
-        let modalResolve = null;
-
-        function showConfirmModal(title, message) {
-            const modal = document.getElementById('customConfirmModal');
-            document.getElementById('confirmTitle').innerText = title || 'Are you sure?';
-            document.getElementById('confirmMessage').innerText = message || 'This action cannot be undone.';
-            
-            modal.classList.add('active');
-
+        // Global Confirmation Modal
+        window.customConfirm = function(title, message) {
             return new Promise((resolve) => {
-                modalResolve = resolve;
+                const modal = document.getElementById('customConfirmModal');
+                const titleEl = document.getElementById('confirmTitle');
+                const messageEl = document.getElementById('confirmMessage');
+                const proceedBtn = document.getElementById('confirmProceed');
+                const cancelBtn = document.getElementById('confirmCancel');
+
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                modal.classList.add('active');
+
+                const handleConfirm = () => {
+                    modal.classList.remove('active');
+                    cleanup();
+                    resolve(true);
+                };
+                const handleCancel = () => {
+                    modal.classList.remove('active');
+                    cleanup();
+                    resolve(false);
+                };
+                const cleanup = () => {
+                    proceedBtn.removeEventListener('click', handleConfirm);
+                    cancelBtn.removeEventListener('click', handleCancel);
+                };
+
+                proceedBtn.addEventListener('click', handleConfirm);
+                cancelBtn.addEventListener('click', handleCancel);
             });
-        }
-
-        document.getElementById('confirmCancel').addEventListener('click', () => {
-            document.getElementById('customConfirmModal').classList.remove('active');
-            if (modalResolve) modalResolve(false);
-        });
-
-        document.getElementById('confirmProceed').addEventListener('click', () => {
-            document.getElementById('customConfirmModal').classList.remove('active');
-            if (modalResolve) modalResolve(true);
-        });
-
-        // Global function for easier access
-        window.customConfirm = async (title, message) => {
-            return await showConfirmModal(title, message);
         };
 
-        // Custom Alert Logic
-        function showCustomAlert(title, message, type = 'info') {
+        // Global Alert Modal
+        window.customAlert = function(title, message, type = 'info') {
             const modal = document.getElementById('customAlertModal');
-            const icon = document.getElementById('alertIcon');
+            const titleEl = document.getElementById('alertTitle');
+            const messageEl = document.getElementById('alertMessage');
             const iconContainer = document.getElementById('alertIconContainer');
+            const icon = document.getElementById('alertIcon');
             const closeBtn = document.getElementById('alertClose');
 
-            document.getElementById('alertTitle').innerText = title || 'Notification';
-            document.getElementById('alertMessage').innerText = message || '';
-
-            // Type handling
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
             if (type === 'success') {
-                icon.className = 'fas fa-check-circle';
                 iconContainer.style.background = '#dcfce7';
-                iconContainer.style.color = '#10b981';
-                closeBtn.style.background = '#10b981';
-            } else if (type === 'warning') {
-                icon.className = 'fas fa-exclamation-triangle';
-                iconContainer.style.background = '#fffbeb';
-                iconContainer.style.color = '#f59e0b';
-                closeBtn.style.background = '#f59e0b';
-            } else { // info
-                icon.className = 'fas fa-info-circle';
+                iconContainer.style.color = '#166534';
+                icon.className = 'fas fa-check-circle';
+                closeBtn.style.background = '#22c55e';
+            } else if (type === 'error') {
+                iconContainer.style.background = '#fee2e2';
+                iconContainer.style.color = '#991b1b';
+                icon.className = 'fas fa-times-circle';
+                closeBtn.style.background = '#ef4444';
+            } else {
                 iconContainer.style.background = '#eff6ff';
                 iconContainer.style.color = '#3b82f6';
+                icon.className = 'fas fa-info-circle';
                 closeBtn.style.background = '#3b82f6';
             }
 
             modal.classList.add('active');
-            
-            return new Promise((resolve) => {
-                document.getElementById('alertClose').onclick = () => {
-                    modal.classList.remove('active');
-                    resolve();
-                };
-            });
-        }
+            closeBtn.onclick = () => modal.classList.remove('active');
+        };
 
-        window.customAlert = showCustomAlert;
-
-        // Attach global listener for confirm-links
+        // Standard link confirmation wrapper
         document.addEventListener('click', async (e) => {
             const confirmLink = e.target.closest('.confirm-link');
             if (confirmLink) {
@@ -924,17 +939,10 @@
                 </div>
                 {% endfor %}
             </div>
-            <div style="padding: 1rem; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; gap: 0.5rem;">
-                <a href="javascript:void(0)" onclick="toggleNoticePopup()" style="flex: 1; padding: 0.85rem; text-align: center; background: white; color: #64748b; font-size: 0.85rem; font-weight: 700; text-decoration: none; border: 1px solid #e2e8f0; border-radius: 10px; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
-                    Close
-                </a>
-                <a href="/notices/" style="flex: 1; padding: 0.85rem; text-align: center; background: #3b82f6; color: white; font-size: 0.85rem; font-weight: 700; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); transition: all 0.2s;" onmouseover="this.style.background='#2563eb'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#3b82f6'; this.style.transform='none';">
-                    View All
-                </a>
+            <div style="padding: 1rem; border-top: 1px solid #f1f5f9; text-align: center; background: #f8fafc;">
+                <a href="/notices/" style="color: #3b82f6; font-size: 0.85rem; font-weight: 800; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">View All Announcements <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
     </div>
-
-    {% block extra_js %}{% endblock %}
 </body>
 </html>

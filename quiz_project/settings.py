@@ -99,28 +99,24 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Cloudinary setup (Only used in Production/Vercel)
-if not DEBUG:
-    try:
-        import cloudinary
-        import cloudinary_storage
-        
-        CLOUDINARY_STORAGE = {
-            'CLOUD_NAME': 'dga82u1w1',
-            'API_KEY': '286863492173943',
-            'API_SECRET': 'aK11zRB-naqxysF-u6Kzk3GBR90',
-        }
-        
-        cloudinary.config(
-            cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
-            api_key=CLOUDINARY_STORAGE['API_KEY'],
-            api_secret=CLOUDINARY_STORAGE['API_SECRET']
-        )
-        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    except ImportError:
-        pass
+# Cloudinary setup (Enforced in Production)
+if os.environ.get('VERCEL') or not DEBUG:
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': 'dga82u1w1',
+        'API_KEY': '286863492173943',
+        'API_SECRET': 'aK11zRB-naqxysF-u6Kzk3GBR90',
+    }
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    
+    import cloudinary
+    cloudinary.config(
+        cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+        api_key=CLOUDINARY_STORAGE['API_KEY'],
+        api_secret=CLOUDINARY_STORAGE['API_SECRET']
+    )
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 86400
