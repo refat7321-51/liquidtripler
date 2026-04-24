@@ -83,11 +83,12 @@ class StudentProfile(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.student_id and not self.user.is_staff:
-            last_profile = StudentProfile.objects.all().order_by('student_id').last()
-            if not last_profile or last_profile.student_id is None:
+            from django.db.models import Max
+            max_id = StudentProfile.objects.aggregate(Max('student_id'))['student_id__max']
+            if max_id is None:
                 self.student_id = 101
             else:
-                self.student_id = last_profile.student_id + 1
+                self.student_id = max_id + 1
         super().save(*args, **kwargs)
 
     def __str__(self):
