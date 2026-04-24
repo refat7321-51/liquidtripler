@@ -1783,36 +1783,37 @@ def delete_session(request):
 
 @login_required(login_url='student_login')
 def teacher_list(request):
-    search_query = request.GET.get('search', '').strip()
+    # Ensure the 3 specific admins exist as Teachers
+    admins_to_ensure = [
+        {'username': 'admin_refat', 'name': 'MD Refat', 'email': 'rifat732151@gmail.com', 'designation': 'Lecturer', 'phone': '01234567890', 'hours': 'Mon, Wed (10:00 AM - 12:00 PM)'},
+        {'username': 'admin_ridoy', 'name': 'Hasin Hasnat', 'email': 'rsridoykhan000@gmail.com', 'designation': 'Lecturer', 'phone': '01787026652', 'hours': 'Tue, Thu (02:00 PM - 04:00 PM)'},
+        {'username': 'admin_rafi', 'name': 'Ridwanol Haque Rafi', 'email': 'rafiqul.h@university.edu', 'designation': 'System Administrator', 'phone': '01987654321', 'hours': 'Sun, Tue (11:00 AM - 01:00 PM)'},
+    ]
     
+    for admin_data in admins_to_ensure:
+        u = User.objects.filter(username=admin_data['username']).first()
+        if u:
+            t, created = Teacher.objects.get_or_create(user=u)
+            if created:
+                t.name = admin_data['name']
+                t.email = admin_data['email']
+                t.designation = admin_data['designation']
+                t.phone = admin_data['phone']
+                t.office_hours = admin_data['hours']
+                t.department = 'Computer Science and Technology'
+                t.save()
+
+    search_query = request.GET.get('search', '').strip()
     if search_query:
-        teachers_qs = Teacher.objects.filter(
+        teachers = Teacher.objects.filter(
             Q(name__icontains=search_query) |
             Q(designation__icontains=search_query) |
             Q(department__icontains=search_query)
-        )
+        ).select_related('user', 'user__student_profile').order_by('id')
     else:
-        teachers_qs = Teacher.objects.all()
-
-    teachers_data = []
-    for teacher in teachers_qs:
-        teachers_data.append({
-            'name': teacher.name,
-            'designation': teacher.designation,
-            'department': teacher.department,
-            'id': f"T-{teacher.id}" if not str(teacher.id).startswith('T-') else teacher.id,
-            'email': teacher.email,
-            'phone': teacher.phone,
-            'office_hours': teacher.office_hours,
-            'status': teacher.status,
-            'status_color': teacher.status_color,
-            'profile_image': teacher.get_profile_image()
-        })
-
-    return render(request, 'teacher_list.html', {
-        'teachers': teachers_data,
-        'search_query': search_query
-    })
+        teachers = Teacher.objects.all().select_related('user', 'user__student_profile').order_by('id')
+    
+    return render(request, 'teacher_list.html', {'teachers': teachers, 'search_query': search_query})
 
 
 
