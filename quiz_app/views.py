@@ -1734,7 +1734,7 @@ def student_dashboard(request):
         'total_students_count': User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).count(),
         'overall_total_marks': student_q_earned + attendance_earned + student_a_earned + profile.bonus_marks,
     }
-    return render(request, 'student_dashboard.html', context)
+    return render(request, 'dashboard.html', context)
 
 
 @login_required
