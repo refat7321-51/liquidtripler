@@ -30,6 +30,8 @@ if os.environ.get('VERCEL') or not DEBUG:
     CSRF_TRUSTED_ORIGINS += ['https://liquidtripler.vercel.app']
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
+    # Added for Vercel/Proxy support
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 else:
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
