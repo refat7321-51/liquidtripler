@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Quiz, Question, Option, StudentAttempt, StudentAnswer, 
-    WarningLog, Teacher, Badge, EarnedBadge, StudentProfile,
+    WarningLog, Teacher, StudentProfile,
     Assignment, AssignmentSubmission, Notice, Resource, 
     ActivityLog, SessionReport
 )
@@ -86,16 +86,7 @@ class ActivityLogAdmin(admin.ModelAdmin):
     list_filter = ('action', 'timestamp')
     search_fields = ('user__username', 'action')
 
-@admin.register(Badge)
-class BadgeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'requirement_type', 'requirement_value')
-    search_fields = ('name',)
 
-@admin.register(EarnedBadge)
-class EarnedBadgeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'badge', 'earned_at')
-    list_filter = ('badge', 'earned_at')
-    search_fields = ('user__username', 'badge__name')
 
 @admin.register(SessionReport)
 class SessionReportAdmin(admin.ModelAdmin):

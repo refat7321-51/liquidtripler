@@ -336,35 +336,7 @@ class ActivityLog(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.action}"
 
-class Badge(models.Model):
-    name = models.CharField(max_length=100)
-    description = models.TextField()
-    icon_class = models.CharField(max_length=100, default='fas fa-award')
-    requirement_type = models.CharField(max_length=50, choices=[
-        ('quiz_count', 'Total Quizzes Completed'),
-        ('high_score', 'Specific Quiz Full Score'),
-        ('resource_download', 'Resources Downloaded'),
-        ('total_score_threshold', 'Total Milestone Score'),
-        ('leaderboard_rank', 'Leaderboard Rank'),
-        ('no_penalty_full_score', 'Full Score with No Penalty'),
-        ('consistency_streak', 'Consistent High Performer'),
-        ('total_tab_switches', 'Total Tab Switches (Looser)'),
-        ('attendance_streak', 'Consecutive Attendance Days'),
-        ('early_bird_quiz', 'Quiz Submitted Within 1 Hour of Publish'),
-        ('assignment_full_marks', 'Full Marks in Assignments'),
-    ])
-    requirement_value = models.IntegerField(default=1)
 
-    def __str__(self):
-        return self.name
-
-class EarnedBadge(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='earned_badges')
-    badge = models.ForeignKey(Badge, on_delete=models.CASCADE)
-    earned_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'badge')
 
 
 class SessionReport(models.Model):

@@ -80,65 +80,7 @@
         </div>
     </div>
 
-    <!-- Student Achievements -->
-    <div style="background: white; padding: 2.5rem; border-radius: 1.5rem; box-shadow: 0 4px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; margin-bottom: 2.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-            <h3 style="font-weight: 800; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 0.75rem;">
-                <i class="fas fa-medal" style="color: #6366f1;"></i> Achievement Roadmap
-            </h3>
-            <button onclick="toggleBadges()" id="seeMoreBtn" style="background: #f1f5f9; border: none; padding: 0.5rem 1.25rem; border-radius: 12px; font-weight: 700; color: #475569; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
-                See More <i class="fas fa-chevron-down" style="margin-left: 5px;"></i>
-            </button>
-        </div>
-        
-        <div id="badgeGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
-            {% for item in badge_progress %}
-            <div class="badge-item {% if forloop.counter > 6 %}hidden-badge{% endif %}" 
-                 style="padding: 1.25rem; background: #f8fafc; border-radius: 1.25rem; border: 1px solid #f1f5f9; transition: all 0.3s ease; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.75rem;
-                        {% if not item.is_earned %}opacity: 0.7; filter: grayscale(50%);{% endif %} 
-                        {% if item.is_earned %}border: 2px solid #fbbf24; background: white; box-shadow: 0 4px 15px rgba(251,191,36,0.1);{% endif %}">
-                
-                <div style="width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-                            background: {% if item.is_earned %}linear-gradient(135deg, #fceabb 0%, #f8b500 100%){% else %}#e2e8f0{% endif %};
-                            color: {% if item.is_earned %}white{% else %}#94a3b8{% endif %};">
-                    <i class="{{ item.badge.icon_class }}"></i>
-                </div>
 
-                <div style="width: 100%;">
-                    <h4 style="font-weight: 800; color: #1e293b; font-size: 0.95rem; margin: 0 0 3px;">{{ item.badge.name }}</h4>
-                    <p style="font-size: 0.75rem; color: #6366f1; margin: 0 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{{ item.requirement_text }}</p>
-                </div>
-                <div style="width: 100%; margin-top: auto;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 800; color: #64748b; margin-bottom: 6px;">
-                        <span>Progress:</span>
-                        <span style="color: #1e293b;">{{ item.current_val }} / {{ item.target_val }}</span>
-                    </div>
-                    <div style="height: 8px; background: #e2e8f0; border-radius: 10px; overflow: hidden; width: 100%;">
-                        <div style="height: 100%; width: {{ item.percent }}%; background: {% if item.is_earned %}linear-gradient(90deg, #f59e0b, #fbbf24){% else %}#3b82f6{% endif %}; border-radius: 10px;"></div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <style>
-        .hidden-badge { display: none !important; }
-    </style>
-
-    <script>
-        function toggleBadges() {
-            const btn = document.getElementById('seeMoreBtn');
-            const allBadges = document.querySelectorAll('.badge-item');
-            if (btn.innerText.includes('See More')) {
-                allBadges.forEach(b => b.classList.remove('hidden-badge'));
-                btn.innerHTML = 'See Less <i class="fas fa-chevron-up" style="margin-left: 5px;"></i>';
-            } else {
-                allBadges.forEach((b, i) => { if (i >= 6) b.classList.add('hidden-badge'); });
-                btn.innerHTML = 'See More <i class="fas fa-chevron-down" style="margin-left: 5px;"></i>';
-            }
-        }
-    </script>
 
     <!-- Details Section -->
     <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
