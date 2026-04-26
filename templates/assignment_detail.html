@@ -153,10 +153,23 @@
                 <p style="color: #94a3b8; font-size: 0.9rem; font-weight: 600;">
                     <i class="far fa-clock"></i> Due: {{ assignment.deadline|date:"d/m/Y H:i" }}
                 </p>
+                
+                {% if submission %}
+                <a href="#submission-area" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 1rem; padding: 0.5rem 1rem; background: #3b82f6; color: white; border-radius: 8px; font-size: 0.8rem; font-weight: 800; text-decoration: none; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                    <i class="fas fa-check-double"></i> View My Submission
+                </a>
+                {% endif %}
             </div>
+            
+            {% if submission %}
+            <div style="background: rgba(34, 197, 94, 0.2); color: #22c55e; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; border: 1px solid rgba(34, 197, 94, 0.2);">
+                Submitted
+            </div>
+            {% else %}
             <div style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">
                 Active
             </div>
+            {% endif %}
         </div>
 
         <div class="detail-stats">
@@ -211,7 +224,7 @@
     </div>
 
     <!-- Submission Area -->
-    <div class="info-section">
+    <div class="info-section" id="submission-area">
         <h3 class="section-title">
             <i class="fas fa-cloud-upload-alt" style="color: #3b82f6;"></i> 
             {% if submission %}Your Submission{% else %}Upload Solution{% endif %}
