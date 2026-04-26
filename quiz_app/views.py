@@ -491,11 +491,15 @@ def student_profile(request):
         is_published=True
     ))
     
-    total_marks = attendance_score + quiz_score + assignment_score + profile.bonus_marks
+    assignment_submissions = AssignmentSubmission.objects.filter(
+        student=request.user
+    ).select_related('assignment').order_by('-submitted_at')
+
     context = {
         'student': request.user,
         'profile': profile,
         'attempts': attempts,
+        'assignment_submissions': assignment_submissions,
         'my_rank': my_rank,
         'total_students': len(temp),
         'total_marks': total_marks,
