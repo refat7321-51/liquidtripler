@@ -218,8 +218,13 @@
     }
 
     .nav-bubble:hover { background: rgba(255,255,255,0.15); }
-    .nav-bubble.current { background: var(--primary); border-color: var(--primary); }
-    .nav-bubble.answered { background: var(--success); border-color: var(--success); }
+    .nav-bubble.active { 
+        background: #3b82f6 !important; 
+        border-color: #60a5fa !important; 
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        transform: scale(1.1);
+    }
+    .nav-bubble.answered { background: var(--success) !important; border-color: var(--success) !important; }
 
     /* Question Card */
     .quiz-body {
@@ -545,12 +550,26 @@ function updateNavigationButtons() {
 
 function updateQuestionNavigation() {
     var bubbles = document.querySelectorAll('.nav-bubble');
+    var activeBubble = null;
+    
     bubbles.forEach((b, i) => {
         var qId = parseInt(b.dataset.question);
-        b.classList.remove('answered', 'current');
+        b.classList.remove('answered', 'active');
         if (selectedAnswers[qId]) b.classList.add('answered');
-        if (i === currentQuestionIndex) b.classList.add('current');
+        if (i === currentQuestionIndex) {
+            b.classList.add('active');
+            activeBubble = b;
+        }
     });
+
+    // Auto-scroll the active bubble into view
+    if (activeBubble) {
+        activeBubble.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+        });
+    }
 }
 
 function startTimer() {
