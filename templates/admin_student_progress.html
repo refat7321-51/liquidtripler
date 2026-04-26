@@ -99,7 +99,7 @@
                     </thead>
                     <tbody>
                         {% for attempt in attempts %}
-                        <tr style="border-bottom: 1px solid #f8fafc;">
+                        <tr style="border-bottom: 1px solid #f8fafc; {% if forloop.counter > 5 %}display: none;{% endif %}" class="quiz-row">
                             <td style="padding: 1rem; font-weight: 700; color: #334155;">{{ attempt.quiz.title }}</td>
                             <td style="padding: 1rem; text-align: center; color: #94a3b8;">{{ attempt.submitted_at|date:"d/m/Y" }}</td>
                             <td style="padding: 1rem; text-align: right;">
@@ -110,6 +110,11 @@
                     </tbody>
                 </table>
             </div>
+            {% if attempts.count > 5 %}
+            <button onclick="toggleRows('quiz-row', this)" style="width: 100%; margin-top: 1rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; color: #3b82f6; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                <span>See More</span> <i class="fas fa-chevron-down"></i>
+            </button>
+            {% endif %}
         </div>
 
         <div style="background: white; padding: 2rem; border-radius: 1.5rem; box-shadow: 0 4px 25px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
@@ -127,7 +132,7 @@
                     </thead>
                     <tbody>
                         {% for sub in submissions %}
-                        <tr style="border-bottom: 1px solid #f8fafc;">
+                        <tr style="border-bottom: 1px solid #f8fafc; {% if forloop.counter > 5 %}display: none;{% endif %}" class="assignment-row">
                             <td style="padding: 1rem; font-weight: 700; color: #334155;">{{ sub.assignment.title }}</td>
                             <td style="padding: 1rem; text-align: center;">
                                 {% if sub.is_graded %}<span style="color: #10b981; font-weight: 800;">GRADED</span>{% else %}<span style="color: #f59e0b; font-weight: 800;">PENDING</span>{% endif %}
@@ -140,6 +145,11 @@
                     </tbody>
                 </table>
             </div>
+            {% if submissions.count > 5 %}
+            <button onclick="toggleRows('assignment-row', this)" style="width: 100%; margin-top: 1rem; padding: 0.75rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; color: #10b981; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">
+                <span>See More</span> <i class="fas fa-chevron-down"></i>
+            </button>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -162,6 +172,20 @@ function adjustBonus(action) {
         if (d.success) { msg.innerHTML = '<span style="color: #10b981;">✅ Success!</span>'; setTimeout(() => location.reload(), 500); }
         else { msg.innerHTML = `<span style="color: #ef4444;">Error: ${d.error}</span>`; }
     });
+}
+
+function toggleRows(className, btn) {
+    const rows = document.querySelectorAll('.' + className);
+    const isShowingMore = btn.querySelector('span').innerText === 'See Less';
+    
+    rows.forEach((row, index) => {
+        if (index >= 5) {
+            row.style.display = isShowingMore ? 'none' : 'table-row';
+        }
+    });
+    
+    btn.querySelector('span').innerText = isShowingMore ? 'See More' : 'See Less';
+    btn.querySelector('i').className = isShowingMore ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
 }
 </script>
 {% endblock %}
