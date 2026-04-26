@@ -272,8 +272,8 @@
                         View Submission
                     </a>
                     {% elif item.assignment.is_deadline_passed %}
-                    <div style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.85rem; border-radius: 0.8rem; background: #f1f5f9; color: #94a3b8; font-weight: 700; font-size: 0.9rem; cursor: not-allowed; border: 1px solid #e2e8f0;">
-                        <i class="fas fa-calendar-times" style="margin-right: 8px;"></i> Expired
+                    <div style="display: flex; align-items: center; justify-content: center; width: 100%; box-sizing: border-box; padding: 0.92rem; border-radius: 0.8rem; background: #f8fafc; color: #94a3b8; font-weight: 700; font-size: 0.85rem; cursor: not-allowed; border: 1.5px solid #f1f5f9; gap: 8px;">
+                        <i class="fas fa-calendar-times"></i> Expired
                     </div>
                     {% else %}
                     <a href="{% url 'assignment_detail' item.assignment.id %}" class="btn-assignment btn-pending" style="display: flex; align-items: center; justify-content: center; width: 100%; box-sizing: border-box; padding: 0.85rem; border-radius: 0.8rem;">
