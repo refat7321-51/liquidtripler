@@ -1331,13 +1331,16 @@ def student_dashboard(request):
     # New Features Data
     now = timezone.now()
     upcoming_quizzes = Quiz.objects.filter(is_published=True, start_time__gt=now).order_by('start_time')
-    recent_activities = ActivityLog.objects.filter(user=request.user).order_by('-timestamp')[:50] # Get more for filtering if needed
-    
-    badges_data = [] # Empty for now to avoid template errors if not cleaned up yet
+    recent_activities = ActivityLog.objects.filter(user=request.user).order_by('-timestamp')[:50] 
+    latest_notices = Notice.objects.all().order_by('-created_at')[:20] # Get more for see more toggle
+
+    # Calculate total tab switches across all quizzes
+    total_tab_switches = sum(a.tab_switch_count for a in StudentAttempt.objects.filter(student=request.user))
 
     context = {
         'profile': profile,
         'total_quiz_score': student_q_earned,
+        'student_q_earned': student_q_earned,  # Matches template expectation
         'recent_score_data': recent_score_data,
         'ass_status': ass_status,
         'my_rank': my_rank,
@@ -1346,13 +1349,16 @@ def student_dashboard(request):
         'assignment_p': assignment_p,
         'total_q_possible': total_q_possible,
         'student_a_earned': student_a_earned,
+        'student_a_earned_val': student_a_earned,
         'total_a_possible': total_a_possible,
         'total_quizzes': Quiz.objects.filter(is_published=True).count(),
         'upcoming_quizzes': upcoming_quizzes,
         'recent_activities': recent_activities,
-        'badges_data': badges_data,
+        'latest_notices': latest_notices,
         'total_students_count': User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).count(),
         'overall_total_marks': student_q_earned + attendance_earned + student_a_earned + profile.bonus_marks,
+        'total_tab_switches': total_tab_switches,
+    }
     }
     return render(request, 'dashboard.html', context)
 
@@ -1821,6 +1827,32 @@ def admin_student_progress(request, user_id):
     # Activity Data
     recent_activities = ActivityLog.objects.filter(user=target_user).order_by('-timestamp')[:50]
 
+    # Tab Switches
+    total_tab_switches = sum(a.tab_switch_count for a in StudentAttempt.objects.filter(student=target_user))
+
+    # Stats for Academic Overview (Quiz)
+    all_quizzes = Quiz.objects.filter(is_published=True)
+    total_q_possible = sum(q.questions.count() for q in all_quizzes)
+    best_scores = StudentAttempt.objects.filter(
+        student=target_user, is_submitted=True
+    ).values('quiz').annotate(max_score=Max('score'))
+    student_q_earned = sum(item['max_score'] for item in best_scores)
+    quiz_p = round((student_q_earned / total_q_possible * 100)) if total_q_possible > 0 else 0
+
+    # Stats for Academic Overview (Assignment)
+    all_assignments = Assignment.objects.all()
+    total_a_possible = sum(a.total_marks for a in all_assignments)
+    ass_submissions = AssignmentSubmission.objects.filter(
+        student=target_user, 
+        is_graded=True,
+        is_published=True
+    )
+    student_a_earned = sum(s.marks for s in ass_submissions)
+    assignment_p = round((student_a_earned / total_a_possible * 100)) if total_a_possible > 0 else 0
+
+    # Stats for Academic Overview (Attendance)
+    attendance_p = min(round((profile.attendance_count / 30) * 100), 100)
+
     context = {
         'target_user': target_user,
         'profile': profile,
@@ -1829,6 +1861,14 @@ def admin_student_progress(request, user_id):
         'submissions': submissions,
         'total_marks': student_total_score,
         'recent_activities': recent_activities,
+        'total_tab_switches': total_tab_switches,
+        'student_q_earned': student_q_earned,
+        'total_q_possible': total_q_possible,
+        'quiz_p': quiz_p,
+        'student_a_earned': student_a_earned,
+        'total_a_possible': total_a_possible,
+        'assignment_p': assignment_p,
+        'attendance_p': attendance_p,
     }
     return render(request, 'admin_student_progress.html', context)
 

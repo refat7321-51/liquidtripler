@@ -181,6 +181,17 @@
                     <div style="font-weight: 700; color: #1e293b; font-size: 0.8rem;">Assignment Marks</div>
                     <div style="font-size: 0.65rem; color: #64748b; font-weight: 600;">{{ student_a_earned }}/{{ total_a_possible }} Marks</div>
                 </div>
+
+                <!-- Tab Switch Counter (NEW) -->
+                <div style="text-align: center;">
+                    <div class="progress-circle" style="width: 100px; height: 100px; border-radius: 50%; background: #fee2e2; border: 2px solid #ef4444; position: relative; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.75rem; box-shadow: 0 4px 12px rgba(239,68,68,0.1);">
+                        <div style="width: 85px; height: 85px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                            <span style="font-size: 1.2rem; font-weight: 800; color: #ef4444;">{{ total_tab_switches }}</span>
+                        </div>
+                    </div>
+                    <div style="font-weight: 700; color: #1e293b; font-size: 0.8rem;">Tab Switches</div>
+                    <div style="font-size: 0.65rem; color: #64748b; font-weight: 600;">Live Count</div>
+                </div>
             </div>
         </div>
 
@@ -231,10 +242,11 @@
             </a>
         </div>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="announcement-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
             {% if latest_notices %}
                 {% for notice in latest_notices %}
-                <div style="padding: 1.25rem; border-radius: 1rem; background: #f8fafc; border: 1px solid #f1f5f9; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#f1f5f9';">
+                <div class="notice-card {% if forloop.counter > 3 %}hidden-notice{% endif %}" 
+                     style="padding: 1.25rem; border-radius: 1rem; background: #f8fafc; border: 1px solid #f1f5f9; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#f1f5f9';">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <h4 style="font-weight: 700; color: #334155; font-size: 1rem;">{{ notice.title }}</h4>
                         <span style="font-size: 0.75rem; font-weight: 600; color: #94a3b8;">{{ notice.created_at|date:"d/m" }}</span>
@@ -242,6 +254,14 @@
                     <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 0;">{{ notice.content|truncatewords:20 }}</p>
                 </div>
                 {% endfor %}
+                
+                {% if latest_notices|length > 3 %}
+                <div style="grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 0.5rem;">
+                    <button onclick="toggleNotices(this)" style="background: none; border: none; padding: 0.5rem 1.5rem; color: #3b82f6; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
+                        <span>See More</span> <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                {% endif %}
             {% else %}
                 <div style="text-align: center; padding: 2rem; color: #94a3b8; grid-column: 1 / -1;">
                     <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.3;"></i>
@@ -286,19 +306,44 @@
         });
     }
     function toggleActivities() {
+        const items = document.querySelectorAll('.activity-item.hidden-activity');
         const btn = document.getElementById('seeMoreActivityBtn');
-        const hiddenItems = document.querySelectorAll('.activity-item.hidden-activity');
-        const allItems = document.querySelectorAll('.activity-item');
+        const isShowing = btn.innerText.includes('See Less');
         
-        if (btn.innerText.includes('See More')) {
-            allItems.forEach(item => item.classList.remove('hidden-activity'));
-            btn.innerHTML = 'See Less <i class="fas fa-chevron-up"></i>';
-        } else {
-            allItems.forEach((item, index) => {
-                if (index >= 5) item.classList.add('hidden-activity');
-            });
-            btn.innerHTML = 'See More <i class="fas fa-chevron-down"></i>';
-        }
+        const allItems = document.querySelectorAll('.activity-item');
+        allItems.forEach((item, idx) => {
+            if (idx >= 5) {
+                if (isShowing) {
+                    item.style.display = 'none';
+                    item.style.animation = '';
+                } else {
+                    item.style.display = 'flex';
+                    item.style.animation = 'itemFadeIn 0.4s ease forwards';
+                }
+            }
+        });
+        
+        btn.innerHTML = isShowing ? 'See More <i class="fas fa-chevron-down"></i>' : 'See Less <i class="fas fa-chevron-up"></i>';
+    }
+
+    function toggleNotices(btn) {
+        const notices = document.querySelectorAll('.notice-card');
+        const isShowing = btn.innerText.includes('See Less');
+        
+        notices.forEach((notice, idx) => {
+            if (idx >= 3) {
+                if (isShowing) {
+                    notice.style.display = 'none';
+                    notice.style.animation = '';
+                } else {
+                    notice.style.display = 'block';
+                    notice.style.animation = 'itemFadeIn 0.4s ease forwards';
+                }
+            }
+        });
+        
+        btn.querySelector('span').innerText = isShowing ? 'See More' : 'See Less';
+        btn.querySelector('i').className = isShowing ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
     }
 
     setInterval(updateTimers, 1000);
