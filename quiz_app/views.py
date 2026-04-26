@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.contrib import messages
@@ -2116,7 +2117,7 @@ def publish_assignment_result(request, submission_id):
         recipient=submission.student
     )
     messages.success(request, f"Result published for {submission.student.get_full_name()}!")
-    return redirect('admin_submissions')
+    return redirect(f"{reverse('admin_submissions')}?assignment={submission.assignment.id}")
 
 
 @login_required(login_url='admin_login')
