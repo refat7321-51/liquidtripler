@@ -186,7 +186,7 @@
                 <div class="detail-stat-value">
                     {% if submission %}
                         {% if submission.is_graded %}
-                            {% if assignment.is_deadline_passed %}
+                            {% if submission.is_published or assignment.is_deadline_passed %}
                                 {{ submission.marks }}
                             {% else %}
                                 <span style="font-size: 0.9rem; color: #10b981;">Graded</span>
@@ -274,7 +274,7 @@
         {% endif %}
 
         {% if submission and submission.is_graded %}
-            {% if assignment.is_deadline_passed %}
+            {% if submission.is_published or assignment.is_deadline_passed %}
                 {% if submission.feedback %}
                 <div class="feedback-card" style="margin-top: 2rem;">
                     <h4 style="font-size: 0.95rem; font-weight: 800; color: #065f46; margin-bottom: 0.5rem;"><i class="fas fa-comment-dots"></i> Instructor's Feedback</h4>
@@ -284,7 +284,7 @@
             {% else %}
                 <div style="margin-top: 2rem; padding: 1.25rem; background: #f8fafc; border-radius: 1rem; border: 1px solid #e2e8f0; text-align: center;">
                     <p style="color: #64748b; font-size: 0.85rem; font-weight: 600; margin: 0;">
-                        <i class="fas fa-lock"></i> Feedback and marks will be visible after the deadline.
+                        <i class="fas fa-lock"></i> Feedback and marks will be visible after the deadline or when published.
                     </p>
                 </div>
             {% endif %}
