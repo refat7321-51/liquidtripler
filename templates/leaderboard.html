@@ -18,9 +18,9 @@
         <h1 style="font-size:2.2rem;font-weight:900;color:#1e293b;letter-spacing:-1px;margin:0;">
             Leaderboard
         </h1>
-        <p style="color:#94a3b8;font-size:0.95rem;margin-top:0.4rem;font-weight:600;">
+        <p style="color:#94a3b8;font-size:0.95rem;margin-top:0.4rem;font-weight:600;" id="leaderboardSubtext">
             {% if selected_quiz %}
-                Top performers for <span style="color:#0891b2;">{{ selected_quiz.title }}</span>
+                Top performers for <span style="color:#0891b2;" id="quizTitleSpan">{{ selected_quiz.title }}</span>
             {% else %}
                 Academic performance ranking across all activities
             {% endif %}
@@ -33,195 +33,41 @@
                 box-shadow:0 4px 20px rgba(0,0,0,0.03);border:1px solid rgba(255,255,255,0.5);
                 display:flex;align-items:center;gap:0.75rem;overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <a href="{% url 'leaderboard' %}" 
-           class="{% if not selected_quiz %}active-filter{% endif %}"
+           class="filter-link {% if not selected_quiz %}active-filter{% endif %}"
+           data-quiz-id=""
            style="padding:0.6rem 1.25rem;border-radius:0.85rem;font-size:0.85rem;font-weight:700;
                   text-decoration:none;white-space:nowrap;transition:all .2s;
                   {% if not selected_quiz %}background:#06b6d4;color:white;box-shadow:0 4px 12px rgba(6,182,212,0.25);
                   {% else %}background:transparent;color:#64748b;{% endif %}"
-           onmouseover="this.style.background='{% if not selected_quiz %}#06b6d4{% else %}#f1f5f9{% endif %}'"
-           onmouseout="this.style.background='{% if not selected_quiz %}#06b6d4{% else %}transparent{% endif %}'">
+           onmouseover="if(!this.classList.contains('active-filter')) this.style.background='#f1f5f9'"
+           onmouseout="if(!this.classList.contains('active-filter')) this.style.background='transparent'">
             Global Rank
         </a>
         <div style="width:1px;height:20px;background:#e2e8f0;"></div>
         {% for quiz in quizzes %}
         <a href="{% url 'leaderboard' %}?quiz_id={{ quiz.id }}" 
-           class="{% if selected_quiz.id == quiz.id %}active-filter{% endif %}"
+           class="filter-link {% if selected_quiz.id == quiz.id %}active-filter{% endif %}"
+           data-quiz-id="{{ quiz.id }}"
            style="padding:0.6rem 1.25rem;border-radius:0.85rem;font-size:0.85rem;font-weight:700;
                   text-decoration:none;white-space:nowrap;transition:all .2s;
                   {% if selected_quiz.id == quiz.id %}background:#06b6d4;color:white;box-shadow:0 4px 12px rgba(6,182,212,0.25);
                   {% else %}background:transparent;color:#64748b;{% endif %}"
-           onmouseover="this.style.background='{% if selected_quiz.id == quiz.id %}#06b6d4{% else %}#f1f5f9{% endif %}'"
-           onmouseout="this.style.background='{% if selected_quiz.id == quiz.id %}#06b6d4{% else %}transparent{% endif %}'">
+           onmouseover="if(!this.classList.contains('active-filter')) this.style.background='#f1f5f9'"
+           onmouseout="if(!this.classList.contains('active-filter')) this.style.background='transparent'">
             {{ quiz.title }}
         </a>
         {% endfor %}
     </div>
 
-    {% if top_three %}
-        
-        <!-- ── FEATURED PODIUM (Top 3) ── -->
-        <div class="podium-container" style="display:flex;justify-content:center;align-items:flex-end;gap:1rem;margin-bottom:4rem;padding-top:2rem;flex-wrap:nowrap;">
-
-            
-            <!-- 2nd Place -->
-            {% if top_three|length >= 2 %}
-            {% with second=top_three.1 %}
-            <div class="podium-card-2" style="text-align:center;width:160px;animation:fadeInUp 0.6s ease-out 0.1s both;">
-                <div style="position:relative;display:inline-block;margin-bottom:1rem;">
-                    <div class="podium-avatar-small" style="width:80px;height:80px;border-radius:50%;padding:3px;background:white;
-                                box-shadow:0 8px 20px rgba(16,185,129,0.15);border:2px solid #10b981;">
-                        {% if second.profile.profile_image %}
-                            <img src="{{ second.profile.profile_image.url }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
-                        {% else %}
-                            <div style="width:100%;height:100%;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.5rem;color:#10b981;">
-                                {{ second.student.first_name|first|upper }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
-                                background:#10b981;color:white;width:24px;height:24px;border-radius:50%;
-                                font-size:0.75rem;font-weight:900;display:flex;align-items:center;justify-content:center;
-                                border:2px solid white;box-shadow:0 4px 8px rgba(0,0,0,0.1);">2</div>
-                </div>
-                <div style="font-weight:800;color:#1e293b;font-size:0.9rem;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                    {{ second.student.get_full_name|default:second.student.username }}
-                </div>
-                <div class="podium-score-small" style="background:linear-gradient(135deg,#10b981,#059669);border-radius:1.2rem;
-                            padding:1rem 0.5rem;color:white;box-shadow:0 8px 25px rgba(16,185,129,0.2);">
-                    <div class="podium-score-val" style="font-size:1.45rem;font-weight:900;line-height:1;">{{ second.total_score }}</div>
-                    <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;opacity:0.8;margin-top:2px;">Points</div>
-                </div>
-            </div>
-            {% endwith %}
-            {% endif %}
-
-            <!-- 1st Place (Winner) -->
-            {% if top_three|length >= 1 %}
-            {% with first=top_three.0 %}
-            <div class="podium-card-1" style="text-align:center;width:200px;z-index:2;animation:fadeInUp 0.6s ease-out both;">
-                <div style="margin-bottom:0.5rem;font-size:1.8rem;filter:drop-shadow(0 4px 8px rgba(245,158,11,0.3));">👑</div>
-                <div style="position:relative;display:inline-block;margin-bottom:1.25rem;">
-                    <div class="podium-avatar-large" style="width:110px;height:110px;border-radius:50%;padding:4px;background:white;
-                                box-shadow:0 0 30px rgba(6,182,212,0.25);border:3px solid #06b6d4;">
-                        {% if first.profile.profile_image %}
-                            <img src="{{ first.profile.profile_image.url }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
-                        {% else %}
-                            <div style="width:100%;height:100%;border-radius:50%;background:#06b6d4;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:2rem;color:white;">
-                                {{ first.student.first_name|first|upper }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
-                                background:#0891b2;color:white;width:28px;height:28px;border-radius:50%;
-                                font-size:0.85rem;font-weight:900;display:flex;align-items:center;justify-content:center;
-                                border:2px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.15);">1</div>
-                </div>
-                <div style="font-weight:900;color:#1e293b;font-size:1rem;margin-bottom:6px;">
-                    {{ first.student.get_full_name|default:first.student.username }}
-                </div>
-                <div class="podium-score-large" style="background:linear-gradient(135deg,#06b6d4,#0891b2);border-radius:1.5rem;
-                            padding:1.4rem 0.6rem;color:white;box-shadow:0 12px 35px rgba(6,182,212,0.35);">
-                    <div class="podium-score-val-large" style="font-size:2rem;font-weight:900;line-height:1;">{{ first.total_score }}</div>
-                    <div style="font-size:0.7rem;font-weight:800;text-transform:uppercase;opacity:0.9;margin-top:2px;letter-spacing:0.5px;">Grand Points</div>
-                </div>
-            </div>
-            {% endwith %}
-            {% endif %}
-
-            <!-- 3rd Place -->
-            {% if top_three|length >= 3 %}
-            {% with third=top_three.2 %}
-            <div class="podium-card-3" style="text-align:center;width:160px;animation:fadeInUp 0.6s ease-out 0.2s both;">
-                <div style="position:relative;display:inline-block;margin-bottom:1rem;">
-                    <div class="podium-avatar-small" style="width:80px;height:80px;border-radius:50%;padding:3px;background:white;
-                                box-shadow:0 8px 20px rgba(99,102,241,0.15);border:2px solid #6366f1;">
-                        {% if third.profile.profile_image %}
-                            <img src="{{ third.profile.profile_image.url }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
-                        {% else %}
-                            <div style="width:100%;height:100%;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.5rem;color:#6366f1;">
-                                {{ third.student.first_name|first|upper }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
-                                background:#6366f1;color:white;width:24px;height:24px;border-radius:50%;
-                                font-size:0.75rem;font-weight:900;display:flex;align-items:center;justify-content:center;
-                                border:2px solid white;box-shadow:0 4px 8px rgba(0,0,0,0.1);">3</div>
-                </div>
-                <div style="font-weight:800;color:#1e293b;font-size:0.9rem;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                    {{ third.student.get_full_name|default:third.student.username }}
-                </div>
-                <div class="podium-score-small" style="background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:1.2rem;
-                            padding:1rem 0.5rem;color:white;box-shadow:0 8px 25px rgba(79,70,229,0.2);">
-                    <div class="podium-score-val" style="font-size:1.45rem;font-weight:900;line-height:1;">{{ third.total_score }}</div>
-                    <div style="font-size:0.6rem;font-weight:800;text-transform:uppercase;opacity:0.8;margin-top:2px;">Points</div>
-                </div>
-            </div>
-            {% endwith %}
-            {% endif %}
-
-
+    <div id="leaderboardContent">
+        <div id="podiumSection">
+            {% include 'leaderboard_podium_partial.html' %}
         </div>
 
-    {% endif %}
-
-    <!-- ── RANKING LIST (Rank 4+) ── -->
-    <div style="background:white;border-radius:1.75rem;box-shadow:0 1px 40px rgba(0,0,0,0.03);
-                border:1px solid #f1f5f9;overflow:hidden;">
-        
-        <div style="padding:1.4rem 1.8rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:1.5rem;">
-            <div style="width:40px;text-align:center;font-weight:800;color:#94a3b8;font-size:0.75rem;text-transform:uppercase;">Rank</div>
-            <div style="flex:1;font-weight:800;color:#94a3b8;font-size:0.75rem;text-transform:uppercase;">Student</div>
-            <div style="text-align:right;font-weight:800;color:#94a3b8;font-size:0.75rem;text-transform:uppercase;">Score</div>
+        <div id="tableSection">
+            {% include 'leaderboard_table_partial.html' %}
         </div>
-
-        {% if remaining_students %}
-            {% for item in remaining_students %}
-                <div id="{% if item.student.id == user.id %}my-rank{% endif %}"
-                     style="padding:1.1rem 1.8rem;display:flex;align-items:center;gap:1.5rem;
-                            {% if not forloop.last %}border-bottom:1px solid #f8fafc;{% endif %}
-                            {% if item.student.id == user.id %}background:linear-gradient(90deg,rgba(6,182,212,0.07),transparent);border-left:4px solid #06b6d4;{% endif %}
-                            transition:all .2s;"
-                     class="rank-row">
-                    
-                    <!-- Rank No -->
-                    <div style="width:40px;text-align:center;">
-                        <span style="font-weight:800;color:#f59e0b;font-size:0.95rem;">#{{ item.rank }}</span>
-                    </div>
-
-                    <!-- Profile Image -->
-                    <div style="flex-shrink:0;">
-                        {% if item.profile.profile_image %}
-                            <img src="{{ item.profile.profile_image.url }}" style="width:42px;height:42px;border-radius:12px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                        {% else %}
-                            <div style="width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-                                        background:#f1f5f9;color:#64748b;font-weight:800;font-size:0.9rem;">
-                                {{ item.student.first_name|first|upper }}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Name & Subtext -->
-                    <div style="flex:1;min-width:0;">
-                         <div style="font-weight:700;color:#1e293b;font-size:0.95rem;display:flex;align-items:center;gap:6px;">
-                            <span class="truncate">{{ item.student.get_full_name|default:item.student.username }}</span>
-                            {% if item.student.id == user.id %}
-                                <span style="background:#0891b2;color:white;font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:99px;letter-spacing:0.5px;">ME</span>
-                            {% endif %}
-                         </div>
-                    </div>
-
-                    <!-- Score -->
-                    <div style="text-align:right;">
-                        <div style="font-size:1.2rem;font-weight:900;color:#1e293b;">{{ item.total_score }}</div>
-                        <div style="font-size:0.65rem;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">PTS</div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
     </div>
-
-</div>
 
 </div>
 
@@ -236,24 +82,14 @@
     background: #f8fafc !important;
 }
 
-.stat-pill {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: #94a3b8;
-    background: #f1f5f9;
-    padding: 2px 7px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
 .truncate {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 180px;
 }
+
+.filter-bar::-webkit-scrollbar { display: none; }
 
 @media (max-width: 640px) {
     .truncate { max-width: 120px; }
@@ -280,20 +116,78 @@
 
 {% block extra_js %}
 <script>
-    window.addEventListener('load', function() {
-        // 1. Scroll filter bar to active item
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterLinks = document.querySelectorAll('.filter-link');
+        const podiumSection = document.getElementById('podiumSection');
+        const tableSection = document.getElementById('tableSection');
+        const leaderboardSubtext = document.getElementById('leaderboardSubtext');
         const filterBar = document.querySelector('.filter-bar');
-        const activeFilter = filterBar ? filterBar.querySelector('.active-filter') : null;
-        
-        if (filterBar && activeFilter) {
-            const scrollPos = activeFilter.offsetLeft - (filterBar.offsetWidth / 2) + (activeFilter.offsetWidth / 2);
-            filterBar.scrollTo({
-                left: scrollPos,
-                behavior: 'smooth'
-            });
-        }
 
-        // 2. Scroll to user's rank in the list
+        // Center active filter initially
+        function centerActiveFilter() {
+            const activeFilter = filterBar.querySelector('.active-filter');
+            if (activeFilter) {
+                const scrollPos = activeFilter.offsetLeft - (filterBar.offsetWidth / 2) + (activeFilter.offsetWidth / 2);
+                filterBar.scrollTo({ left: scrollPos, behavior: 'smooth' });
+            }
+        }
+        centerActiveFilter();
+
+        filterLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // UI feedback
+                filterLinks.forEach(l => {
+                    l.classList.remove('active-filter');
+                    l.style.background = 'transparent';
+                    l.style.color = '#64748b';
+                    l.style.boxShadow = 'none';
+                });
+                this.classList.add('active-filter');
+                this.style.background = '#06b6d4';
+                this.style.color = 'white';
+                this.style.boxShadow = '0 4px 12px rgba(6,182,212,0.25)';
+                
+                centerActiveFilter();
+
+                // Fetch data
+                const url = this.getAttribute('href');
+                const quizId = this.getAttribute('data-quiz-id');
+                
+                // Optional: Fade out content
+                document.getElementById('leaderboardContent').style.opacity = '0.5';
+
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        podiumSection.innerHTML = data.html_podium;
+                        tableSection.innerHTML = data.html_table;
+                        
+                        // Update subtext
+                        if (quizId) {
+                            leaderboardSubtext.innerHTML = `Top performers for <span style="color:#0891b2;">${data.quiz_title}</span>`;
+                        } else {
+                            leaderboardSubtext.innerHTML = 'Academic performance ranking across all activities';
+                        }
+                        
+                        // Update URL without reloading
+                        window.history.pushState({}, '', url);
+                    }
+                })
+                .catch(err => console.error('Error fetching leaderboard:', err))
+                .finally(() => {
+                    document.getElementById('leaderboardContent').style.opacity = '1';
+                });
+            });
+        });
+
+        // Scroll to user's rank in the list (one-time on initial load)
         const myRank = document.getElementById('my-rank');
         if (myRank) {
             setTimeout(function() {

@@ -1169,6 +1169,18 @@ def leaderboard(request):
         'top_three': leaderboard_data[:3],
         'remaining_students': leaderboard_data[3:],
     }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        from django.template.loader import render_to_string
+        html_podium = render_to_string('leaderboard_podium_partial.html', context, request=request)
+        html_table = render_to_string('leaderboard_table_partial.html', context, request=request)
+        return JsonResponse({
+            'success': True,
+            'html_podium': html_podium,
+            'html_table': html_table,
+            'quiz_title': selected_quiz.title if selected_quiz else "Overall Rankings"
+        })
+
     return render(request, 'leaderboard.html', context)
 
 
