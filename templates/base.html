@@ -965,7 +965,12 @@
                         <div class="unread-dot" style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);"></div>
                         {% endif %}
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4; margin-bottom: 8px;">{{ notice.content|truncatechars:80 }}</div>
+                    <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4; margin-bottom: 6px;">{{ notice.content|truncatechars:80 }}</div>
+                    {% if notice.attachments.exists %}
+                    <a href="/notices/" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; color: #6366f1; text-decoration: none; margin-bottom: 6px;">
+                        <i class="fas fa-image" style="font-size: 0.7rem;"></i> See Image
+                    </a>
+                    {% endif %}
                     <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;"><i class="far fa-clock"></i> {{ notice.created_at|timesince }} ago</div>
                 </a>
                 {% empty %}
