@@ -30,8 +30,8 @@
 
 <!-- Student Table -->
 <div style="background: white; border-radius: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f1f5f9; overflow: hidden;">
-    <div style="width: 100%; overflow-x: hidden;">
-        <table style="width: 100%; border-collapse: collapse;">
+    <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 500px;">
             <thead>
                 <tr style="background: #f8fafc;">
                     <th class="mobile-hide" style="padding: 1.25rem 1rem; text-align: center; color: #64748b; font-weight: 700; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; width: 60px;">SL</th>
@@ -188,6 +188,21 @@
 
     @media (max-width: 480px) {
         .mobile-compact-hide { display: none !important; }
+    }
+
+    /* Custom Scrollbar for the table container */
+    div[style*="overflow-x: auto"]::-webkit-scrollbar {
+        height: 5px;
+    }
+    div[style*="overflow-x: auto"]::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
+    div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
 </style>
 
