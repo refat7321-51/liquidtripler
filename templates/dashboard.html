@@ -306,7 +306,6 @@
         });
     }
     function toggleActivities() {
-        const items = document.querySelectorAll('.activity-item.hidden-activity');
         const btn = document.getElementById('seeMoreActivityBtn');
         const isShowing = btn.innerText.includes('See Less');
         
@@ -314,9 +313,10 @@
         allItems.forEach((item, idx) => {
             if (idx >= 5) {
                 if (isShowing) {
-                    item.style.display = 'none';
+                    item.classList.add('hidden-activity');
                     item.style.animation = '';
                 } else {
+                    item.classList.remove('hidden-activity');
                     item.style.display = 'flex';
                     item.style.animation = 'itemFadeIn 0.4s ease forwards';
                 }
