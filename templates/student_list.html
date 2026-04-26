@@ -13,15 +13,15 @@
 </div>
 
 <!-- Search Section -->
-<div class="search-container" style="background: white; padding: 1.5rem 2rem; border-radius: 1.5rem; margin-bottom: 2.5rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;">
-    <form id="studentSearchForm" method="GET" action="{% url 'student_list' %}" style="width: 100%; position: relative;">
+<div class="search-container" style="background: white; padding: 1.25rem; border-radius: 1.5rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; box-sizing: border-box;">
+    <form id="studentSearchForm" method="GET" action="{% url 'student_list' %}" style="width: 100%; position: relative; box-sizing: border-box;">
         <i class="fas fa-search" style="position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: #3b82f6;"></i>
         <input type="text" name="search" id="studentSearchInput" placeholder="Search by name or Student ID..." value="{{ search_query }}" 
                autocomplete="off"
-               style="width: 100%; padding: 0.85rem 1rem 0.85rem 3.25rem; border: 2px solid #f1f5f9; border-radius: 1rem; font-size: 1rem; transition: all 0.3s ease; background: #f8fafc; font-weight: 500; outline: none;">
+               style="width: 100%; padding: 0.85rem 1rem 0.85rem 3.25rem; border: 2px solid #f1f5f9; border-radius: 1rem; font-size: 1rem; transition: all 0.3s ease; background: #f8fafc; font-weight: 500; outline: none; box-sizing: border-box;">
     </form>
-    <div style="display: flex; justify-content: flex-start;">
-        <div class="results-badge" style="background: #eff6ff; color: #3b82f6; padding: 0.6rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; white-space: nowrap; border: 1px solid #dbeafe;">
+    <div style="display: flex; justify-content: flex-start; padding-left: 0.5rem;">
+        <div class="results-badge" style="background: #eff6ff; color: #3b82f6; padding: 0.6rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; white-space: nowrap; border: 1px solid #dbeafe; box-shadow: 0 2px 5px rgba(59,130,246,0.05);">
             <i class="fas fa-user-graduate"></i> 
             <span><span id="student-count-dynamic">{{ students|length }}</span> <span class="hide-on-mobile">Students Registered</span></span>
         </div>
