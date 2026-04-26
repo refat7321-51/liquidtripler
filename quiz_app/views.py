@@ -980,9 +980,8 @@ def submit_quiz(request):
             attempt.score = max(0, attempt.score - 2)
             attempt.save()
         
-        # Log activity and check badges
+        # Log activity
         log_activity(request.user, "Completed Quiz", f"Finished quiz: {attempt.quiz.title}")
-        check_badges(request.user)
 
         return JsonResponse({'success': True, 'attempt_id': attempt.id})
     except Exception as e:
@@ -1453,7 +1452,6 @@ def submit_assignment(request, assignment_id):
             submitted_at=timezone.now()
         )
         log_activity(request.user, "Submitted Assignment", f"Submitted solution for: {assignment.title}")
-        check_badges(request.user)
         messages.success(request, f"Assignment '{assignment.title}' submitted successfully!")
         return redirect('assignment_detail', assignment_id=assignment.id)
     return redirect('assignment_detail', assignment_id=assignment_id)
@@ -1793,117 +1791,13 @@ def admin_student_progress(request, user_id):
     rank_list.sort(key=lambda x: -x['total_score'])
     my_rank = next((i for i, x in enumerate(rank_list, 1) if x['student_id'] == target_user.id), None)
     
-    # Calculate badges for this student
-    check_badges(target_user) # Ensure badges are updated in DB
-    
+
     # Detailed Data
     attempts = StudentAttempt.objects.filter(student=target_user, is_submitted=True).order_by('-submitted_at')
     submissions = AssignmentSubmission.objects.filter(student=target_user).select_related('assignment').order_by('-submitted_at')
     
     # Calculate Total Points for this student (using the rank_list already calculated above)
     student_total_score = next((x['total_score'] for x in rank_list if x['student_id'] == target_user.id), 0)
-
-    # --- Badge Progress System (Matches Student Profile) ---
-    all_badges = Badge.objects.all().order_by('id')
-    earned_badge_ids = EarnedBadge.objects.filter(user=target_user).values_list('badge_id', flat=True)
-    
-    # Filter leaderboard rank badges to show only the most relevant one
-    rank_badges = [b for b in all_badges if b.requirement_type == 'leaderboard_rank']
-    other_badges = [b for b in all_badges if b.requirement_type != 'leaderboard_rank']
-    
-    selected_rank_badge = None
-    if rank_badges:
-        rank_badges.sort(key=lambda b: b.requirement_value)
-        if my_rank and my_rank <= 3:
-            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == my_rank), None)
-            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
-        else:
-            selected_rank_badge = next((b for b in rank_badges if b.requirement_value == 3), None)
-            if not selected_rank_badge: selected_rank_badge = rank_badges[-1]
-            
-    all_badges_to_process = other_badges
-    if selected_rank_badge:
-        all_badges_to_process.append(selected_rank_badge)
-
-    badge_progress = []
-    for badge in all_badges_to_process:
-        is_earned = badge.id in earned_badge_ids
-        target_val = badge.requirement_value
-        
-        # Dynamic calculation for progress display
-        current_val = 0
-        if badge.requirement_type == 'quiz_count':
-            current_val = StudentAttempt.objects.filter(
-                student=target_user, is_submitted=True
-            ).extra(where=["score = total_questions AND total_questions > 0"]).count()
-        elif badge.requirement_type == 'assignment_full_marks':
-            from django.db.models import F
-            current_val = AssignmentSubmission.objects.filter(
-                student=target_user, is_graded=True, marks=F('assignment__total_marks')
-            ).count()
-        elif badge.requirement_type == 'total_score_threshold':
-            current_val = student_total_score
-        elif badge.requirement_type == 'leaderboard_rank':
-            current_val = my_rank if my_rank else 0
-            if my_rank and my_rank <= target_val:
-                is_earned = True
-        elif badge.requirement_type == 'high_score':
-            current_val = StudentAttempt.objects.filter(student=target_user, is_submitted=True).aggregate(max_score=Max('score'))['max_score'] or 0
-        elif badge.requirement_type == 'early_bird_quiz':
-            all_quizzes = Quiz.objects.filter(is_published=True).order_by('created_at')
-            attempts_dict = {a.quiz_id: a for a in StudentAttempt.objects.filter(student=target_user, is_submitted=True)}
-            current_streak = 0
-            now = timezone.now()
-            for quiz in all_quizzes:
-                attempt = attempts_dict.get(quiz.id)
-                if attempt and attempt.submitted_at:
-                    diff = attempt.submitted_at - quiz.created_at
-                    if 0 <= diff.total_seconds() <= 3600:
-                        current_streak += 1
-                        continue
-                if (now - quiz.created_at).total_seconds() > 3600:
-                    current_streak = 0
-            current_val = current_streak
-
-        # Calculate percentage
-        percent = 0
-        if target_val > 0:
-            if badge.requirement_type == 'leaderboard_rank':
-                if is_earned: percent = 100
-                elif my_rank and my_rank > target_val:
-                    percent = int((target_val / my_rank) * 100)
-                else: percent = 0
-            else:
-                percent = min(100, (current_val / target_val) * 100)
-        
-        # Add requirement text
-        req_text = ""
-        if badge.requirement_type == 'quiz_count': req_text = f"Get 100% in {badge.requirement_value} Quizzes"
-        elif badge.requirement_type == 'total_score_threshold': req_text = f"Earn {badge.requirement_value} Points"
-        elif badge.requirement_type == 'resource_download': req_text = f"Download {badge.requirement_value} Resources"
-        elif badge.requirement_type == 'leaderboard_rank': 
-            if badge.requirement_value == 1: req_text = "Reach Rank 1"
-            elif badge.requirement_value == 2: req_text = "Reach Top 2"
-            else: req_text = "Reach Top 3"
-        elif badge.requirement_type == 'high_score': req_text = "Get 100% in a Quiz"
-        elif badge.requirement_type == 'attendance_streak': req_text = f"Maintain {badge.requirement_value} Days Attendance Streak"
-        elif badge.requirement_type == 'early_bird_quiz': req_text = f"Submit {badge.requirement_value} consecutive Quizzes within 1 hour"
-        elif badge.requirement_type == 'total_tab_switches': req_text = f"Switch tabs less than {badge.requirement_value} times"
-        elif badge.requirement_type == 'assignment_full_marks': req_text = f"Get full marks in {badge.requirement_value} Assignments"
-        elif badge.requirement_type == 'no_penalty_full_score': req_text = "Get 100% with 0 tab switches"
-        elif badge.requirement_type == 'consistency_streak': req_text = f"Get 90%+ in {badge.requirement_value} consecutive Quizzes"
-
-        badge_progress.append({
-            'badge': badge,
-            'is_earned': is_earned,
-            'current_val': current_val,
-            'target_val': target_val,
-            'percent': int(percent),
-            'requirement_text': req_text
-        })
-
-    # Sort badges: Earned badges first, then by percent
-    badge_progress.sort(key=lambda x: (not x['is_earned'], -x['percent']))
 
     context = {
         'target_user': target_user,
@@ -1912,7 +1806,6 @@ def admin_student_progress(request, user_id):
         'attempts': attempts,
         'submissions': submissions,
         'total_marks': student_total_score,
-        'badge_progress': badge_progress,
     }
     return render(request, 'admin_student_progress.html', context)
 
@@ -2075,8 +1968,7 @@ def mark_attendance(request):
                 date=date,
                 defaults={'status': status}
             )
-            # Check badges for student after marking attendance
-            check_badges(student.user)
+
     
     messages.success(request, f'Attendance for {date} updated successfully!')
     from django.urls import reverse
