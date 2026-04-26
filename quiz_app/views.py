@@ -441,6 +441,13 @@ def student_profile(request):
         student=request.user, is_submitted=True
     ).order_by('-submitted_at')
 
+    # Add percentage to each attempt for easier template coloring
+    for attempt in attempts:
+        if attempt.total_questions > 0:
+            attempt.percentage = round((attempt.score / attempt.total_questions) * 100)
+        else:
+            attempt.percentage = 0
+
     # --- Unified Ranking System (Matches Leaderboard) ---
     all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
 

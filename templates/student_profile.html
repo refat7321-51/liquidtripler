@@ -154,8 +154,8 @@
                     </div>
                     <div class="history-score-section">
                         <div class="score-main">{{ attempt.score }}<span class="score-total">/{{ attempt.total_questions }}</span></div>
-                        <div class="score-percent" style="color: {% if attempt.score|add:0 >= 7 %}#10b981{% elif attempt.score|add:0 >= 4 %}#f59e0b{% else %}#ef4444{% endif %};">
-                            {% widthratio attempt.score attempt.total_questions 100 %}% Score
+                        <div class="score-percent" style="color: {% if attempt.percentage == 100 %}#10b981{% elif attempt.percentage >= 70 %}#0891b2{% elif attempt.percentage >= 30 %}#f59e0b{% else %}#ef4444{% endif %}; font-weight: 800;">
+                            {{ attempt.percentage }}% Score
                         </div>
                     </div>
                     <a href="{% url 'quiz_result' attempt.id %}" class="history-view-btn">View</a>
