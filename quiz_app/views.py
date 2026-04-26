@@ -1304,6 +1304,8 @@ def student_dashboard(request):
     best_scores = StudentAttempt.objects.filter(
         student=request.user, is_submitted=True
     ).values('quiz').annotate(max_score=Max('score'))
+    all_quizzes = Quiz.objects.filter(is_published=True)
+    total_q_possible = sum(q.questions.count() for q in all_quizzes)
     student_q_earned = sum(item['max_score'] for item in best_scores) + profile.quiz_bonus_marks
     
     # 3. Assignment Points
