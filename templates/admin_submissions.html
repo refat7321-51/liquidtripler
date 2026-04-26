@@ -172,15 +172,14 @@
         const form = document.getElementById('gradeForm');
         
         document.getElementById('modalStudentName').innerText = 'Grading: ' + name;
-        document.getElementById('modalMarks').value = currentMarks;
+        document.getElementById('modalMarks').value = (currentMarks === 'None' || currentMarks === '') ? 0 : currentMarks;
         document.getElementById('modalFeedback').value = currentFeedback;
         document.getElementById('maxMarks').innerText = totalMarks;
         
-        // Ensure the ID is numeric and sanitized
         form.action = `/submission/${subId}/grade/`;
+        form.dataset.subId = subId; // Store subId for table update
         modal.style.display = 'flex';
         
-        // Focus on marks input
         setTimeout(() => document.getElementById('modalMarks').focus(), 100);
     }
 
@@ -188,12 +187,67 @@
         document.getElementById('gradeModal').style.display = 'none';
     }
 
-    // Close on outside click
+    // Handle AJAX Submission
+    document.getElementById('gradeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = this;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const subId = form.dataset.subId;
+        const originalBtnText = submitBtn.innerText;
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        
+        const formData = new FormData(form);
+        formData.append('ajax', 'true');
+        
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update marks in the table instantly (optional but recommended)
+                // location.reload(); // If you want to refresh anyway, but we want to avoid it.
+                // For now, a quick alert and close is best.
+                closeGradeModal();
+                
+                // Show a modern success toast/alert
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:#10b981; color:white; padding:12px 24px; border-radius:12px; font-weight:700; z-index:9999; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); animation: slideIn 0.3s ease;';
+                toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => toast.remove(), 500);
+                    // Refresh after 1 second to show new labels, or just let user manually refresh later
+                    window.location.reload(); 
+                }, 1500);
+                
+            } else {
+                alert('Error: ' + (data.message || 'Could not save marks.'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Something went wrong. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+        }
+    });
+
     window.onclick = function(event) {
         const modal = document.getElementById('gradeModal');
-        if (event.target == modal) {
-            closeGradeModal();
-        }
+        if (event.target == modal) closeGradeModal();
     }
 </script>
 {% endblock %}

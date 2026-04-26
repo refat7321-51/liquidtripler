@@ -2066,6 +2066,10 @@ def grade_submission(request, submission_id):
         submission.feedback = request.POST.get('feedback', '')
         submission.is_graded = True
         submission.save()
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.POST.get('ajax') == 'true':
+            return JsonResponse({'success': True, 'message': f"Marks saved for {submission.student.get_full_name()}"})
+            
         messages.success(request, f"Marks saved for {submission.student.get_full_name()}. You can now publish it.")
         return redirect('admin_submissions')
     return JsonResponse({'success': False})
