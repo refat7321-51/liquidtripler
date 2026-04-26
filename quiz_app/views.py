@@ -1478,10 +1478,33 @@ def student_dashboard(request):
     recent_quiz_score = recent_attempt.score if recent_attempt else None
     recent_quiz_total = recent_attempt.total_questions if recent_attempt else None
     
-    # Assignment stats
-    total_assignments = Assignment.objects.count()
-    completed_assignments = AssignmentSubmission.objects.filter(student=request.user).count()
-    pending_assignments = total_assignments - completed_assignments
+    # Assignment stats (Improved Logic)
+    now = timezone.now()
+    all_assignments = Assignment.objects.all()
+    ass_status = {'completed': 0, 'pending': 0, 'expired': 0}
+    for a in all_assignments:
+        submission = AssignmentSubmission.objects.filter(student=request.user, assignment=a).first()
+        if submission:
+            ass_status['completed'] += 1
+        elif a.is_deadline_passed:
+            ass_status['expired'] += 1
+        else:
+            ass_status['pending'] += 1
+
+    # Unified Recent Score (Quiz or Assignment)
+    recent_quiz = StudentAttempt.objects.filter(student=request.user, is_submitted=True).order_by('-submitted_at').first()
+    recent_ass = AssignmentSubmission.objects.filter(student=request.user, is_graded=True, is_published=True).order_by('-submitted_at').first()
+    
+    recent_score_data = None
+    if recent_quiz and recent_ass:
+        if recent_quiz.submitted_at > recent_ass.submitted_at:
+            recent_score_data = {'score': recent_quiz.score, 'total': recent_quiz.total_questions, 'type': 'Quiz', 'title': recent_quiz.quiz.title}
+        else:
+            recent_score_data = {'score': recent_ass.marks, 'total': recent_ass.assignment.total_marks, 'type': 'Assignment', 'title': recent_ass.assignment.title}
+    elif recent_quiz:
+        recent_score_data = {'score': recent_quiz.score, 'total': recent_quiz.total_questions, 'type': 'Quiz', 'title': recent_quiz.quiz.title}
+    elif recent_ass:
+        recent_score_data = {'score': recent_ass.marks, 'total': recent_ass.assignment.total_marks, 'type': 'Assignment', 'title': recent_ass.assignment.title}
     
     # --- Unified Ranking System (Matches Leaderboard) ---
     all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
@@ -1694,28 +1717,24 @@ def student_dashboard(request):
 
     context = {
         'profile': profile,
-        'quiz_stats': {'total_score': total_quiz_score, 'count': attempts.count()},
-        'assignment_stats': {'pending': pending_assignments, 'completed': completed_assignments},
-        'rank': my_rank,
+        'total_quiz_score': student_q_earned,
+        'recent_score_data': recent_score_data,
+        'ass_status': ass_status,
+        'my_rank': my_rank,
         'attendance_p': attendance_p,
         'quiz_p': quiz_p,
         'assignment_p': assignment_p,
-        'student_q_earned': student_q_earned,
         'total_q_possible': total_q_possible,
         'student_a_earned': student_a_earned,
         'total_a_possible': total_a_possible,
         'total_quizzes': Quiz.objects.filter(is_published=True).count(),
-        'unique_attempts': StudentAttempt.objects.filter(student=request.user, is_submitted=True).values('quiz').distinct().count(),
-        'total_assignments': Assignment.objects.count(),
-        'completed_assignments': completed_assignments,
-        'recent_quiz_score': recent_quiz_score,
-        'recent_quiz_total': recent_quiz_total,
-        'latest_notices': Notice.objects.all()[:3],
         'upcoming_quizzes': upcoming_quizzes,
-        'activities': recent_activities[:5],
-        'badges': badges_data,
+        'recent_activities': recent_activities,
+        'badges_data': badges_data,
+        'total_students_count': User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).count(),
+        'overall_total_marks': student_q_earned + attendance_earned + student_a_earned + profile.bonus_marks,
     }
-    return render(request, 'dashboard.html', context)
+    return render(request, 'student_dashboard.html', context)
 
 
 @login_required
