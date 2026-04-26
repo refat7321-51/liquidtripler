@@ -71,17 +71,6 @@
                 </div>
             </div>
 
-            <!-- Requirements File -->
-            <div style="margin-bottom: 2.5rem; padding: 2rem; border: 2px dashed #e2e8f0; border-radius: 1rem; background: #f8fafc; text-align: center;">
-                <label for="requirements_file" style="cursor: pointer;">
-                    <i class="fas fa-file-upload" style="font-size: 2rem; color: #6366f1; margin-bottom: 1rem; display: block;"></i>
-                    <span style="display: block; font-size: 0.95rem; font-weight: 600; color: #1e293b;">Upload Requirements File</span>
-                    <span style="display: block; font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">PDF, Image or ZIP (Optional)</span>
-                    <input type="file" name="requirements_file" id="requirements_file" style="display: none;">
-                    <span id="file-name-display" style="display: block; margin-top: 1rem; color: #6366f1; font-weight: 600; font-size: 0.85rem;"></span>
-                </label>
-            </div>
-
             <!-- Submit Button -->
             <button type="submit" style="width: 100%; padding: 1rem; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; border-radius: 1rem; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);">
                 Create Assignment
@@ -91,15 +80,6 @@
 </div>
 
 <script>
-    const fileInput = document.getElementById('requirements_file');
-    const fileNameDisplay = document.getElementById('file-name-display');
-
-    fileInput.addEventListener('change', function() {
-        if (this.files && this.files.length > 0) {
-            fileNameDisplay.textContent = 'Selected: ' + this.files[0].name;
-        }
-    });
-
     // Style inputs on focus
     const inputs = document.querySelectorAll('input, textarea');
     inputs.forEach(input => {
