@@ -1799,6 +1799,9 @@ def admin_student_progress(request, user_id):
     # Calculate Total Points for this student (using the rank_list already calculated above)
     student_total_score = next((x['total_score'] for x in rank_list if x['student_id'] == target_user.id), 0)
 
+    # Activity Data
+    recent_activities = ActivityLog.objects.filter(user=target_user).order_by('-timestamp')[:50]
+
     context = {
         'target_user': target_user,
         'profile': profile,
@@ -1806,6 +1809,7 @@ def admin_student_progress(request, user_id):
         'attempts': attempts,
         'submissions': submissions,
         'total_marks': student_total_score,
+        'recent_activities': recent_activities,
     }
     return render(request, 'admin_student_progress.html', context)
 
