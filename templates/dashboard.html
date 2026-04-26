@@ -333,10 +333,11 @@
         notices.forEach((notice, idx) => {
             if (idx >= 5) {
                 if (isShowing) {
-                    notice.style.display = 'none';
+                    notice.classList.add('hidden-notice');
                     notice.style.animation = '';
                 } else {
-                    notice.style.display = 'block';
+                    notice.classList.remove('hidden-notice');
+                    notice.style.display = 'block'; // Ensure it's visible after removing hidden-notice
                     notice.style.animation = 'itemFadeIn 0.4s ease forwards';
                 }
             }
