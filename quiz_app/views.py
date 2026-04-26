@@ -1343,7 +1343,7 @@ def student_dashboard(request):
         'student_q_earned': student_q_earned,  # Matches template expectation
         'recent_score_data': recent_score_data,
         'ass_status': ass_status,
-        'my_rank': my_rank,
+        'rank': my_rank,
         'attendance_p': attendance_p,
         'quiz_p': quiz_p,
         'assignment_p': assignment_p,
