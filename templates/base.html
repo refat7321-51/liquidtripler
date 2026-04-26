@@ -958,20 +958,24 @@
             </div>
             <div style="overflow-y: auto; flex: 1; scroll-behavior: smooth;">
                 {% for notice in latest_notices %}
-                <a href="{% if notice.link %}{{ notice.link }}{% else %}/notices/{% endif %}" class="notice-item {% if notice.id in unread_notice_ids %}unread{% endif %}" style="display: block; padding: 1rem 1.25rem; border-bottom: 1px solid #f8fafc; text-decoration: none; transition: background 0.2s; position: relative; {% if notice.id in unread_notice_ids %}background: #f0f9ff; border-left: 3px solid #3b82f6;{% else %}background: white;{% endif %}" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='{% if notice.id in unread_notice_ids %}#f0f9ff{% else %}white{% endif %}'">
+                <a href="{% if notice.link %}{{ notice.link }}{% else %}/notices/{% endif %}" class="notice-item {% if notice.id in unread_notice_ids %}unread{% endif %}"
+                   style="display: block; padding: 1rem 1.25rem; border-bottom: 1px solid #f8fafc; text-decoration: none; transition: background 0.2s; position: relative;
+                          {% if notice.id in unread_notice_ids %}background: #f0f9ff; border-left: 3px solid #3b82f6;{% else %}background: white;{% endif %}"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='{% if notice.id in unread_notice_ids %}#f0f9ff{% else %}white{% endif %}'">
                     <div style="font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
                         {{ notice.title }}
                         {% if notice.id in unread_notice_ids %}
-                        <div class="unread-dot" style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);"></div>
+                        <div class="unread-dot" style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); flex-shrink: 0;"></div>
                         {% endif %}
                     </div>
-                    <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4; margin-bottom: 6px;">{{ notice.content|truncatechars:80 }}</div>
+                    <div style="font-size: 0.8rem; color: #64748b; line-height: 1.4; margin-bottom: 5px;">{{ notice.content|truncatechars:80 }}</div>
                     {% if notice.attachments.exists %}
-                    <a href="/notices/" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; color: #6366f1; text-decoration: none; margin-bottom: 6px;">
+                    <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 700; color: #6366f1; margin-bottom: 5px;">
                         <i class="fas fa-image" style="font-size: 0.7rem;"></i> See Image
-                    </a>
+                    </span>
                     {% endif %}
-                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;"><i class="far fa-clock"></i> {{ notice.created_at|timesince }} ago</div>
+                    <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 600;"><i class="far fa-clock"></i> {{ notice.created_at|timesince }} ago</div>
                 </a>
                 {% empty %}
                 <div style="padding: 2.5rem 1.25rem; text-align: center; color: #94a3b8;">
