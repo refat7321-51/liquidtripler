@@ -86,9 +86,10 @@
         letter-spacing: 0.5px;
     }
 
-    .status-pending { background: #fff7ed; color: #f97316; }
-    .status-submitted { background: #ecfdf5; color: #10b981; }
-    .status-graded { background: #eff6ff; color: #3b82f6; }
+    .status-submitted { background: #dcfce7; color: #166534; }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-graded { background: #e0e7ff; color: #4338ca; }
+    .status-expired { background: #fee2e2; color: #b91c1c; }
 
     .assignment-icon {
         width: 48px;
@@ -202,8 +203,8 @@
         {% for item in assignments %}
         <div class="assignment-card">
             <!-- Status Badge -->
-            <div class="card-status-badge {% if item.submission and item.submission.is_published %}status-graded{% elif item.is_submitted %}status-submitted{% else %}status-pending{% endif %}">
-                {% if item.submission and item.submission.is_published %}Graded{% elif item.is_submitted %}Submitted{% else %}Pending{% endif %}
+            <div class="card-status-badge {% if item.assignment.is_deadline_passed %}status-expired{% elif item.submission and item.submission.is_published %}status-graded{% elif item.is_submitted %}status-submitted{% else %}status-pending{% endif %}">
+                {% if item.assignment.is_deadline_passed %}Expired{% elif item.submission and item.submission.is_published %}Graded{% elif item.is_submitted %}Submitted{% else %}Pending{% endif %}
             </div>
 
             <!-- Icon -->
@@ -228,7 +229,10 @@
                 </div>
                 <div class="detail-item" style="text-align: right;">
                     <span class="detail-label">Deadline</span>
-                    <span class="detail-value"><i class="fas fa-calendar-alt" style="color: #ef4444; font-size: 0.75rem;"></i> {{ item.assignment.deadline|date:"d/m/Y" }}</span>
+                    <span class="detail-value" style="{% if item.assignment.is_deadline_passed %}color: #ef4444;{% endif %}">
+                        <i class="fas fa-calendar-alt" style="font-size: 0.75rem;"></i> 
+                        {% if item.assignment.is_deadline_passed %}Expired{% else %}{{ item.assignment.deadline|date:"d/m/Y" }}{% endif %}
+                    </span>
                 </div>
             </div>
 
@@ -263,9 +267,19 @@
                     </div>
                 </div>
                 {% else %}
-                <a href="{% url 'assignment_detail' item.assignment.id %}" class="btn-assignment {% if item.is_submitted %}btn-view{% else %}btn-pending{% endif %}" style="display: flex; align-items: center; justify-content: center; width: 100%; box-sizing: border-box; padding: 0.85rem; border-radius: 0.8rem;">
-                    {% if item.is_submitted %}View Submission{% else %}Start Assignment{% endif %}
-                </a>
+                    {% if item.is_submitted %}
+                    <a href="{% url 'assignment_detail' item.assignment.id %}" class="btn-assignment btn-view" style="display: flex; align-items: center; justify-content: center; width: 100%; box-sizing: border-box; padding: 0.85rem; border-radius: 0.8rem;">
+                        View Submission
+                    </a>
+                    {% elif item.assignment.is_deadline_passed %}
+                    <div style="display: flex; align-items: center; justify-content: center; width: 100%; padding: 0.85rem; border-radius: 0.8rem; background: #f1f5f9; color: #94a3b8; font-weight: 700; font-size: 0.9rem; cursor: not-allowed; border: 1px solid #e2e8f0;">
+                        <i class="fas fa-calendar-times" style="margin-right: 8px;"></i> Expired
+                    </div>
+                    {% else %}
+                    <a href="{% url 'assignment_detail' item.assignment.id %}" class="btn-assignment btn-pending" style="display: flex; align-items: center; justify-content: center; width: 100%; box-sizing: border-box; padding: 0.85rem; border-radius: 0.8rem;">
+                        Start Assignment
+                    </a>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>

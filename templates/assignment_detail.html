@@ -250,6 +250,17 @@
                     {% endif %}
                 </div>
             </div>
+        {% elif assignment.is_deadline_passed %}
+            <div style="padding: 3rem 2rem; background: #fff1f2; border: 2px solid #fecdd3; border-radius: 1.25rem; text-align: center;">
+                <div style="width: 60px; height: 60px; background: #ef4444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.5rem; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);">
+                    <i class="fas fa-calendar-times"></i>
+                </div>
+                <h4 style="color: #991b1b; font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;">Submission Closed</h4>
+                <p style="color: #b91c1c; font-size: 0.95rem; font-weight: 600; margin: 0;">
+                    The deadline for this assignment was {{ assignment.deadline|date:"d/m/Y | H:i" }}.<br>
+                    You can no longer submit your work.
+                </p>
+            </div>
         {% else %}
             <form action="{% url 'submit_assignment' assignment.id %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}

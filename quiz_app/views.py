@@ -1143,18 +1143,16 @@ def start_quiz(request, quiz_id):
         return redirect('student_login')
     quiz = get_object_or_404(Quiz, id=quiz_id)
 
-    # Admin can take quiz unlimited times — skip all restrictions
     if not request.user.is_staff:
-        # Check if already submitted
         already_submitted = StudentAttempt.objects.filter(
             student=request.user, quiz=quiz, is_submitted=True
-        ).first()
+        ).exists()
         if already_submitted:
-            return redirect('quiz_result', attempt_id=already_submitted.id)
+            return redirect('quiz_list')
 
-        # Check if expired — show correct answers only
         if quiz.is_expired():
-            return redirect('expired_quiz_answers', quiz_id=quiz_id)
+            messages.error(request, "This quiz has expired and can no longer be taken.")
+            return redirect('quiz_list')
 
     if request.method == 'POST':
         session_id = str(uuid.uuid4())
@@ -1796,6 +1794,12 @@ def assignment_detail(request, assignment_id):
 @login_required(login_url='student_login')
 def submit_assignment(request, assignment_id):
     assignment = get_object_or_404(Assignment, id=assignment_id)
+    
+    # NEW: Check if deadline passed
+    if assignment.is_deadline_passed:
+        messages.error(request, "The deadline for this assignment has passed. Submissions are no longer accepted.")
+        return redirect('assignment_detail', assignment_id=assignment_id)
+
     if request.method == 'POST':
         file = request.FILES.get('assignment_file')
         drive_link = request.POST.get('drive_link')
