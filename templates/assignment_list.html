@@ -213,17 +213,20 @@
 
             <!-- Title & Description -->
             <div class="assignment-title" style="word-break: break-word; overflow-wrap: break-word;">{{ item.assignment.title }}</div>
-            <p style="color: #64748b; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.5rem; word-break: break-word; overflow-wrap: break-word;">
-                {{ item.assignment.description|truncatewords:15 }}
-            </p>
+            <div style="color: #64748b; font-size: 0.85rem; line-height: 1.5; margin-bottom: 1.25rem; word-break: break-word; overflow-wrap: break-word;">
+                {{ item.assignment.description|truncatechars:100 }}
+                {% if item.assignment.description|length > 100 %}
+                <a href="{% url 'assignment_detail' item.assignment.id %}" style="color: #6366f1; text-decoration: none; font-weight: 700; font-size: 0.8rem; margin-left: 2px;">See More...</a>
+                {% endif %}
+            </div>
 
             <!-- Details -->
-            <div class="assignment-details">
+            <div class="assignment-details" style="margin-top: auto; padding-top: 1.25rem; border-top: 1px dashed #f1f5f9;">
                 <div class="detail-item">
                     <span class="detail-label">Points</span>
                     <span class="detail-value"><i class="fas fa-star" style="color: #f59e0b; font-size: 0.75rem;"></i> {{ item.assignment.total_marks }} Marks</span>
                 </div>
-                <div class="detail-item">
+                <div class="detail-item" style="text-align: right;">
                     <span class="detail-label">Deadline</span>
                     <span class="detail-value"><i class="fas fa-calendar-alt" style="color: #ef4444; font-size: 0.75rem;"></i> {{ item.assignment.deadline|date:"d/m/Y" }}</span>
                 </div>
@@ -244,25 +247,27 @@
             {% endif %}
 
             <!-- Action Button -->
-            {% if user.is_staff %}
-            <div style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
-                <a href="{% url 'admin_submissions' %}?assignment={{ item.assignment.id }}" class="btn-assignment" style="margin: 0; width: 100%; box-sizing: border-box; background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem;">
-                    <i class="fas fa-users"></i> View Submissions
-                </a>
-                <div style="display: flex; gap: 0.75rem; width: 100%;">
-                    <a href="{% url 'edit_assignment' item.assignment.id %}" class="btn-assignment" style="margin: 0; flex: 1; box-sizing: border-box; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem;">
-                        <i class="fas fa-edit"></i> Edit
+            <div style="margin-top: 1.5rem; width: 100%;">
+                {% if user.is_staff %}
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; width: 100%;">
+                    <a href="{% url 'admin_submissions' %}?assignment={{ item.assignment.id }}" class="btn-assignment" style="margin: 0; width: 100%; box-sizing: border-box; background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0.8rem;">
+                        <i class="fas fa-users"></i> View Submissions
                     </a>
-                    <button onclick="confirmDeleteSubmission({{ item.assignment.id }}, '{{ item.assignment.title|escapejs }}')" class="btn-assignment" style="margin: 0; flex: 1; box-sizing: border-box; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem;">
-                        <i class="fas fa-trash-alt"></i> Delete
-                    </button>
+                    <div style="display: flex; gap: 0.75rem; width: 100%;">
+                        <a href="{% url 'edit_assignment' item.assignment.id %}" class="btn-assignment" style="margin: 0; flex: 1; box-sizing: border-box; background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0.8rem;">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button onclick="confirmDeleteSubmission({{ item.assignment.id }}, '{{ item.assignment.title|escapejs }}')" class="btn-assignment" style="margin: 0; flex: 1; box-sizing: border-box; background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; border-radius: 0.75rem; padding: 0.8rem;">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </div>
                 </div>
+                {% else %}
+                <a href="{% url 'assignment_detail' item.assignment.id %}" class="btn-assignment {% if item.is_submitted %}btn-view{% else %}btn-pending{% endif %}" style="display: flex; align-items: center; justify-content: center; width: 100%; box-sizing: border-box; padding: 0.85rem; border-radius: 0.8rem;">
+                    {% if item.is_submitted %}View Submission{% else %}Start Assignment{% endif %}
+                </a>
+                {% endif %}
             </div>
-            {% else %}
-            <a href="{% url 'assignment_detail' item.assignment.id %}" class="btn-assignment {% if item.is_submitted %}btn-view{% else %}btn-pending{% endif %}">
-                {% if item.is_submitted %}View Submission{% else %}Start Assignment{% endif %}
-            </a>
-            {% endif %}
         </div>
         {% empty %}
         <div class="empty-state">
