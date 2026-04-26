@@ -221,65 +221,44 @@
         {% for notice in notices %}
         <div class="announcement-card {% if notice.id in unread_ids %}is-unread{% endif %}">
             <div class="announcement-header">
-                <h2 class="announcement-title">
-                    {{ notice.title }}
-                    {% if notice.id in unread_ids %}
-                    <span style="background: #ef4444; color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 6px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">New</span>
-                    {% endif %}
-                </h2>
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span class="announcement-date">
-                        <i class="far fa-calendar-alt" style="margin-right: 4px;"></i> {{ notice.created_at|date:"d/m/Y" }}
-                    </span>
-                    {% if user.is_staff %}
-                    <a href="javascript:void(0)" onclick="showDeleteModal('{% url 'delete_notice' notice.id %}')" style="color: #ef4444; background: #fee2e2; padding: 6px 10px; border-radius: 8px; transition: all 0.2s;" title="Delete Notice" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
-                        <i class="fas fa-trash-alt"></i>
-                    </a>
-                    {% endif %}
+                <div>
+                    <h2 class="announcement-title">
+                        {{ notice.title }}
+                        {% if notice.id in unread_ids %}
+                        <span style="background: #ef4444; color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 6px; margin-left: 8px; vertical-align: middle; text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;">New</span>
+                        {% endif %}
+                    </h2>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px; color: #94a3b8; font-size: 0.75rem; font-weight: 700;">
+                        <span><i class="far fa-calendar-alt"></i> {{ notice.publish_at|date:"d/m/Y" }}</span>
+                        <span><i class="far fa-clock"></i> {{ notice.publish_at|time:"h:i A" }}</span>
+                    </div>
                 </div>
+                {% if user.is_staff %}
+                <a href="javascript:void(0)" onclick="showDeleteModal('{% url 'delete_notice' notice.id %}')" style="color: #ef4444; background: #fef2f2; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 1px solid #fee2e2;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
+                    <i class="fas fa-trash-alt" style="font-size: 0.85rem;"></i>
+                </a>
+                {% endif %}
             </div>
             
             <div class="announcement-body">
-                {{ notice.content|linebreaks }}
+                <div style="margin-bottom: 1.5rem; line-height: 1.6;">
+                    {{ notice.content|linebreaks }}
+                </div>
                 
                 {% if notice.attachments.exists %}
-                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #e2e8f0;">
+                    <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed #f1f5f9;">
                         <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
                         {% for attachment in notice.attachments.all %}
                             {% with a_url=attachment.file.url|lower %}
                             {% if '.pdf' in a_url %}
-                                <!-- PDF attachment -->
-                                <a href="{{ attachment.file.url }}" target="_blank"
-                                   style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.1rem;
-                                          background: #fef2f2; color: #ef4444; border-radius: 10px; font-weight: 700;
-                                          text-decoration: none; border: 1px solid #fecaca; transition: all 0.2s; font-size:0.88rem;"
-                                   onmouseover="this.style.background='#fee2e2'; this.style.transform='translateY(-2px)';"
-                                   onmouseout="this.style.background='#fef2f2'; this.style.transform='none';">
-                                    <i class="far fa-file-pdf" style="font-size: 1rem;"></i> See PDF
+                                <a href="{{ attachment.file.url }}" target="_blank" class="attachment-btn pdf">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>View PDF</span>
                                 </a>
                             {% else %}
-                                <!-- Try as image thumbnail, fallback to download on error -->
-                                <div id="att-wrap-{{ attachment.id }}"
-                                     onclick="openImageModal('{{ attachment.file.url }}')"
-                                     style="width: 110px; height: 110px; border-radius: 14px; overflow: hidden;
-                                            box-shadow: 0 4px 15px rgba(0,0,0,0.08); cursor: zoom-in;
-                                            border: 2.5px solid #f1f5f9; transition: all 0.25s; flex-shrink: 0; position: relative;"
-                                     onmouseover="this.style.transform='scale(1.06)'; this.style.borderColor='#6366f1'; this.style.boxShadow='0 8px 25px rgba(99,102,241,0.2)';"
-                                     onmouseout="this.style.transform='scale(1)'; this.style.borderColor='#f1f5f9'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.08)';">
-                                    <img src="{{ attachment.file.url }}" alt="Attachment"
-                                         style="width:100%; height:100%; object-fit:cover; display:block;"
-                                         onerror="
-                                            var w = document.getElementById('att-wrap-{{ attachment.id }}');
-                                            w.onclick = null;
-                                            w.style.cssText = 'width:auto; height:auto; border-radius:10px; overflow:visible; box-shadow:none; cursor:default; border:none; transition:none; flex-shrink:0; position:static;';
-                                            w.onmouseover = null; w.onmouseout = null;
-                                            w.innerHTML = '<a href=\'{{ attachment.file.url }}\' download style=\'display:inline-flex;align-items:center;gap:0.5rem;padding:0.65rem 1.1rem;background:#f1f5f9;color:#475569;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid #e2e8f0;font-size:0.88rem;\'><i class=\'fas fa-paperclip\'></i> Download File</a>';
-                                         ">
-                                    <div style="position:absolute; bottom:0; left:0; right:0; height:28px;
-                                                background: linear-gradient(to top, rgba(0,0,0,0.45), transparent);
-                                                display:flex; align-items:flex-end; justify-content:center; padding-bottom:5px; pointer-events:none;">
-                                        <i class="fas fa-expand" style="color:white; font-size:0.6rem;"></i>
-                                    </div>
+                                <div class="attachment-thumb-wrapper" onclick="openImageModal('{{ attachment.file.url }}')">
+                                    <img src="{{ attachment.file.url }}" class="attachment-thumb" alt="Notice Attachment">
+                                    <div class="thumb-overlay"><i class="fas fa-search-plus"></i></div>
                                 </div>
                             {% endif %}
                             {% endwith %}
@@ -287,14 +266,25 @@
                         </div>
                     </div>
                 {% endif %}
-            </div>
-            
-                <span>Posted by Administration</span>
-                {% if notice.link %}
-                <a href="{{ notice.link }}" style="margin-left: auto; color: #3b82f6; text-decoration: none; display: flex; align-items: center; gap: 5px;">
-                    View Details <i class="fas fa-chevron-right" style="font-size: 0.7rem;"></i>
-                </a>
-                {% endif %}
+
+                <!-- Card Footer -->
+                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 32px; height: 32px; background: #eff6ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 0.8rem; border: 1px solid #dbeafe;">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div style="line-height: 1.2;">
+                            <div style="font-size: 0.65rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Verified Notice</div>
+                            <div style="font-size: 0.85rem; color: #475569; font-weight: 700;">Administration</div>
+                        </div>
+                    </div>
+
+                    {% if notice.link %}
+                    <a href="{{ notice.link }}" style="display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 1.25rem; background: #f8fafc; color: #3b82f6; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.85rem; font-weight: 800; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#eff6ff'; this.style.borderColor='#3b82f6';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#e2e8f0';">
+                        View Details <i class="fas fa-arrow-right" style="font-size: 0.75rem;"></i>
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% empty %}
