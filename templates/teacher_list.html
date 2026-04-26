@@ -365,7 +365,7 @@
     const searchInput = document.getElementById('searchInput');
     const searchForm = document.getElementById('searchForm');
     let typingTimer;
-    const doneTypingInterval = 400; // Wait for 400ms after typing stops
+    const doneTypingInterval = 1000; // Wait for 1 second after typing stops
 
     searchInput.addEventListener('input', () => {
         clearTimeout(typingTimer);
