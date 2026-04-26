@@ -1359,7 +1359,6 @@ def student_dashboard(request):
         'overall_total_marks': student_q_earned + attendance_earned + student_a_earned + profile.bonus_marks,
         'total_tab_switches': total_tab_switches,
     }
-    }
     return render(request, 'dashboard.html', context)
 
 
