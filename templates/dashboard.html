@@ -245,7 +245,7 @@
         <div class="announcement-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
             {% if latest_notices %}
                 {% for notice in latest_notices %}
-                <div class="notice-card {% if forloop.counter > 3 %}hidden-notice{% endif %}" 
+                <div class="notice-card {% if forloop.counter > 5 %}hidden-notice{% endif %}" 
                      style="padding: 1.25rem; border-radius: 1rem; background: #f8fafc; border: 1px solid #f1f5f9; transition: all 0.2s;" onmouseover="this.style.background='#f1f5f9'; this.style.borderColor='#e2e8f0';" onmouseout="this.style.background='#f8fafc'; this.style.borderColor='#f1f5f9';">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                         <h4 style="font-weight: 700; color: #334155; font-size: 1rem;">{{ notice.title }}</h4>
@@ -255,7 +255,7 @@
                 </div>
                 {% endfor %}
                 
-                {% if latest_notices|length > 3 %}
+                {% if latest_notices|length > 5 %}
                 <div style="grid-column: 1 / -1; display: flex; justify-content: center; margin-top: 0.5rem;">
                     <button onclick="toggleNotices(this)" style="background: none; border: none; padding: 0.5rem 1.5rem; color: #3b82f6; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s;">
                         <span>See More</span> <i class="fas fa-chevron-down"></i>
@@ -331,7 +331,7 @@
         const isShowing = btn.innerText.includes('See Less');
         
         notices.forEach((notice, idx) => {
-            if (idx >= 3) {
+            if (idx >= 5) {
                 if (isShowing) {
                     notice.style.display = 'none';
                     notice.style.animation = '';
