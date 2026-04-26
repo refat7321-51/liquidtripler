@@ -1300,19 +1300,11 @@ def student_dashboard(request):
     # --- Unified Raw Mark Scoring System ---
     # Formula: Total = (Attendance * 5) + Quiz Marks + Assignment Marks
     
-    # 1. Attendance Points
-    attendance_earned = profile.attendance_count * 5
-    attendance_possible = 30 * 5  # Target of 30 days
-    
-    # 2. Quiz Points
-    all_quizzes = Quiz.objects.filter(is_published=True).prefetch_related('questions')
-    total_q_possible = sum(q.questions.count() for q in all_quizzes)
-    
     from django.db.models import Max
     best_scores = StudentAttempt.objects.filter(
         student=request.user, is_submitted=True
     ).values('quiz').annotate(max_score=Max('score'))
-    student_q_earned = sum(item['max_score'] for item in best_scores)
+    student_q_earned = sum(item['max_score'] for item in best_scores) + profile.quiz_bonus_marks
     
     # 3. Assignment Points
     all_assignments = Assignment.objects.all()
@@ -1323,7 +1315,10 @@ def student_dashboard(request):
         is_graded=True,
         is_published=True
     )
-    student_a_earned = sum(s.marks for s in submissions)
+    student_a_earned = sum(s.marks for s in submissions) + profile.assignment_bonus_marks
+    
+    # 4. Attendance Points
+    attendance_earned = (profile.attendance_count * 5) + profile.attendance_bonus_marks
     
     # Academic Overview Stats (Updated to Mark-based)
     attendance_p = min(round((profile.attendance_count / 30) * 100), 100)
@@ -1806,14 +1801,14 @@ def admin_student_progress(request, user_id):
     from django.db.models import Max
     for s in all_students:
         s_attempts = StudentAttempt.objects.filter(student=s, is_submitted=True)
-        q_score = sum(item['max_score'] for item in s_attempts.values('quiz').annotate(max_score=Max('score')))
-        att_score = (s.student_profile.attendance_count * 5)
+        q_score = sum(item['max_score'] for item in s_attempts.values('quiz').annotate(max_score=Max('score'))) + s.student_profile.quiz_bonus_marks
+        att_score = (s.student_profile.attendance_count * 5) + s.student_profile.attendance_bonus_marks
         now = timezone.now()
         ass_score = sum(sub.marks for sub in AssignmentSubmission.objects.filter(
             student=s, 
             is_graded=True,
             assignment__deadline__lt=now
-        ))
+        )) + s.student_profile.assignment_bonus_marks
         bonus = s.student_profile.bonus_marks
         
         rank_list.append({'student_id': s.id, 'total_score': q_score + att_score + ass_score + bonus})
@@ -1841,7 +1836,7 @@ def admin_student_progress(request, user_id):
     best_scores = StudentAttempt.objects.filter(
         student=target_user, is_submitted=True
     ).values('quiz').annotate(max_score=Max('score'))
-    student_q_earned = sum(item['max_score'] for item in best_scores)
+    student_q_earned = sum(item['max_score'] for item in best_scores) + profile.quiz_bonus_marks
     quiz_p = round((student_q_earned / total_q_possible * 100)) if total_q_possible > 0 else 0
 
     # Stats for Academic Overview (Assignment)
@@ -1852,7 +1847,7 @@ def admin_student_progress(request, user_id):
         is_graded=True,
         is_published=True
     )
-    student_a_earned = sum(s.marks for s in ass_submissions)
+    student_a_earned = sum(s.marks for s in ass_submissions) + profile.assignment_bonus_marks
     assignment_p = round((student_a_earned / total_a_possible * 100)) if total_a_possible > 0 else 0
 
     # Stats for Academic Overview (Attendance)
@@ -1892,14 +1887,25 @@ def admin_adjust_bonus_marks(request, user_id):
             data = json.loads(request.body)
             action = data.get('action')
             amount_val = data.get('amount', 0)
+            category = data.get('category', 'overall')
             
-            # Ensure amount is an integer even if string is sent
+            # Ensure amount is an integer
             amount = int(amount_val) if amount_val else 0
             
+            # Map category to field
+            field_map = {
+                'overall': 'bonus_marks',
+                'quiz': 'quiz_bonus_marks',
+                'assignment': 'assignment_bonus_marks',
+                'attendance': 'attendance_bonus_marks'
+            }
+            field_name = field_map.get(category, 'bonus_marks')
+            
+            current_val = getattr(profile, field_name)
             if action == 'add':
-                profile.bonus_marks += amount
+                setattr(profile, field_name, current_val + amount)
             elif action == 'minus':
-                profile.bonus_marks -= amount
+                setattr(profile, field_name, current_val - amount)
             
             profile.save()
             return JsonResponse({

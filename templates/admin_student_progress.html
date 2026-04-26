@@ -109,9 +109,15 @@
     <!-- Admin Actions & Quick Stats Grid -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
         <div style="background: #f8fafc; padding: 1.5rem; border-radius: 1.25rem; border: 2px dashed #06b6d4; display: flex; flex-direction: column; justify-content: center; gap: 0.75rem;">
-            <div style="color: #06b6d4; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Admin Adjust: Bonus Marks</div>
+            <div style="color: #06b6d4; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Admin Adjust: Select Category</div>
+            <select id="adjustCategory" style="width: 100%; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-weight: 700; color: #334155;">
+                <option value="overall">Overall Bonus</option>
+                <option value="quiz">Quiz Marks</option>
+                <option value="assignment">Assignment Marks</option>
+                <option value="attendance">Attendance Marks</option>
+            </select>
             <div style="display: flex; gap: 0.5rem;">
-                <input type="number" id="bonusAmount" value="0" style="width: 60px; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-weight: 700;">
+                <input type="number" id="bonusAmount" value="0" style="width: 70px; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-weight: 700;">
                 <button onclick="adjustBonus('add')" style="flex: 1; background: #06b6d4; color: white; border: none; padding: 0.4rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">+ Add</button>
                 <button onclick="adjustBonus('minus')" style="flex: 1; background: #ef4444; color: white; border: none; padding: 0.4rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">- Minus</button>
             </div>
@@ -239,13 +245,14 @@
 <script>
 function adjustBonus(action) {
     const amount = parseInt(document.getElementById('bonusAmount').value) || 0;
+    const category = document.getElementById('adjustCategory').value;
     const msg = document.getElementById('bonusMsg');
     if (amount <= 0) { msg.innerHTML = '<span style="color: #ef4444;">Invalid amount.</span>'; return; }
     msg.innerHTML = '<span style="color: #64748b;">Updating...</span>';
     fetch('{% url "admin_adjust_bonus_marks" target_user.id %}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-        body: JSON.stringify({ action: action, amount: amount })
+        body: JSON.stringify({ action: action, amount: amount, category: category })
     })
     .then(r => r.json())
     .then(d => {

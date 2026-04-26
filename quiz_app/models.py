@@ -69,7 +69,10 @@ class StudentProfile(models.Model):
     phone_number = models.CharField(max_length=20, null=True, blank=True)
     bio = models.TextField(max_length=500, null=True, blank=True)
     attendance_count = models.IntegerField(default=0)
-    bonus_marks = models.IntegerField(default=0)
+    bonus_marks = models.IntegerField(default=0) # Overall bonus
+    quiz_bonus_marks = models.IntegerField(default=0)
+    assignment_bonus_marks = models.IntegerField(default=0)
+    attendance_bonus_marks = models.IntegerField(default=0)
     last_activity = models.DateTimeField(null=True, blank=True)
     view_timestamps = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
