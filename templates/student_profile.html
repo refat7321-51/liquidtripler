@@ -389,26 +389,28 @@ function compressImage(file) {
         };
         reader.onerror = reject;
     });
-    function toggleHistory(btn) {
-        const hiddenCards = document.querySelectorAll('.history-card[data-index]');
-        const isShowingMore = btn.querySelector('span').innerText === 'See Less';
-        
-        hiddenCards.forEach(card => {
-            const index = parseInt(card.getAttribute('data-index'));
-            if (index > 5) {
-                if (isShowingMore) {
-                    card.classList.remove('show-item');
-                    card.classList.add('hidden-item');
-                } else {
-                    card.classList.remove('hidden-item');
-                    card.classList.add('show-item');
-                }
+}
+
+function toggleHistory(btn) {
+    const hiddenCards = document.querySelectorAll('.history-card[data-index]');
+    const isShowingMore = btn.querySelector('span').innerText === 'See Less';
+    
+    hiddenCards.forEach(card => {
+        const index = parseInt(card.getAttribute('data-index'));
+        if (index > 5) {
+            if (isShowingMore) {
+                card.classList.remove('show-item');
+                card.classList.add('hidden-item');
+            } else {
+                card.classList.remove('hidden-item');
+                card.classList.add('show-item');
             }
-        });
-        
-        btn.querySelector('span').innerText = isShowingMore ? 'See More' : 'See Less';
-        btn.querySelector('i').className = isShowingMore ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
-    }
+        }
+    });
+    
+    btn.querySelector('span').innerText = isShowingMore ? 'See More' : 'See Less';
+    btn.querySelector('i').className = isShowingMore ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+}
 </script>
 
 
