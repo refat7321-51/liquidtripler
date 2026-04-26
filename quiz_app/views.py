@@ -539,16 +539,22 @@ def student_profile(request):
     profile, _ = StudentProfile.objects.get_or_create(user=request.user)
 
     if request.method == 'POST':
+        if 'profile_image' in request.FILES:
+            try:
+                profile.profile_image = request.FILES['profile_image']
+                profile.save()
+                messages.success(request, "Profile image updated successfully!")
+            except Exception as e:
+                messages.error(request, f"Error uploading image: {str(e)}")
+        
+        # Save other fields if needed
         full_name = request.POST.get('full_name', '').strip()
         if full_name:
             parts = full_name.split()
             request.user.first_name = parts[0]
             request.user.last_name = ' '.join(parts[1:]) if len(parts) > 1 else ''
             request.user.save()
-
-        if 'profile_image' in request.FILES:
-            profile.profile_image = request.FILES['profile_image']
-            profile.save()
+            messages.success(request, "Name updated successfully!")
 
         return redirect('student_profile')
 
@@ -1004,11 +1010,19 @@ def admin_profile(request):
 
         # Update StudentProfile model
         if 'profile_image' in request.FILES:
-            profile.profile_image = request.FILES['profile_image']
+            try:
+                profile.profile_image = request.FILES['profile_image']
+                profile.save()
+                messages.success(request, "Profile image updated successfully!")
+            except Exception as e:
+                messages.error(request, f"Error uploading admin image: {str(e)}")
             
         profile.phone_number = phone_number
         profile.bio = designation # Syncing designation to bio for consistency
-        profile.save()
+        try:
+            profile.save()
+        except Exception as e:
+            messages.error(request, f"Error saving profile: {str(e)}")
 
         # Update or Create Teacher model
         if not teacher_profile:
