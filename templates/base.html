@@ -538,7 +538,12 @@
                             if (wrapper.style.display === 'none') {
                                 wrapper.style.display = 'flex';
                                 document.body.style.overflow = 'hidden';
-                                // Mark all as read when popup is opened
+                                // Removed immediate mark-read on opening
+                            } else {
+                                wrapper.style.display = 'none';
+                                document.body.style.overflow = '';
+                                
+                                // Mark all as read ONLY when closing the popup
                                 fetch('/notices/mark-read/', {
                                     method: 'POST',
                                     headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
@@ -546,9 +551,6 @@
                                 }).then(r => r.json()).then(data => {
                                     if (data.success) clearNoticeBadges();
                                 });
-                            } else {
-                                wrapper.style.display = 'none';
-                                document.body.style.overflow = '';
                             }
                         }
 
