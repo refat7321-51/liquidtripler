@@ -410,7 +410,8 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a href="/notices/" class="sidebar-link {% if 'notice' in request.path %}active{% endif %}">
+                        <a href="/notices/" class="sidebar-link {% if 'notice' in request.path %}active{% endif %}"
+                           onclick="if(typeof clearNoticeBadges==='function'){fetch('/notices/mark-read/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},body:JSON.stringify({mark_all:true})}).then(r=>r.json()).then(d=>{if(d.success)clearNoticeBadges();})}">
                             <div><i class="fas fa-bullhorn"></i> <span>Announcements</span></div>
                             {% if unread_notices_count > 0 and 'notice' not in request.path %}
                             <span id="sidebarNoticeBadge" class="nav-badge">{{ unread_notices_count }}</span>
@@ -513,12 +514,38 @@
                         }
                     </style>
                     <script>
+                        function clearNoticeBadges() {
+                            const bellDot = document.getElementById('mainBellDot');
+                            if (bellDot) bellDot.style.display = 'none';
+                            const sidebarBadge = document.getElementById('sidebarNoticeBadge');
+                            if (sidebarBadge) sidebarBadge.style.display = 'none';
+                            const unreadBadge = document.getElementById('unreadBadge');
+                            if (unreadBadge) unreadBadge.style.display = 'none';
+                            const markAllBtn = document.getElementById('markAllReadBtn');
+                            if (markAllBtn) markAllBtn.style.display = 'none';
+                            document.querySelectorAll('.notice-item.unread').forEach(item => {
+                                item.style.background = 'white';
+                                item.style.borderLeft = 'none';
+                                item.classList.remove('unread');
+                                const dot = item.querySelector('.unread-dot');
+                                if (dot) dot.style.display = 'none';
+                            });
+                        }
+
                         function toggleNoticePopup() {
                             const wrapper = document.getElementById('noticeModalWrapper');
                             
                             if (wrapper.style.display === 'none') {
                                 wrapper.style.display = 'flex';
-                                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+                                document.body.style.overflow = 'hidden';
+                                // Mark all as read when popup is opened
+                                fetch('/notices/mark-read/', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                                    body: JSON.stringify({mark_all: true})
+                                }).then(r => r.json()).then(data => {
+                                    if (data.success) clearNoticeBadges();
+                                });
                             } else {
                                 wrapper.style.display = 'none';
                                 document.body.style.overflow = '';
