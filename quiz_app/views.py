@@ -1882,7 +1882,7 @@ def add_assignment(request):
             requirements_file=req_file
         )
         messages.success(request, f"Assignment '{title}' created successfully!")
-        return redirect('admin_reports')
+        return redirect('assignment_list')
         
     return render(request, 'add_assignment.html')
 
