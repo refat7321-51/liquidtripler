@@ -1847,7 +1847,7 @@ def submit_assignment(request, assignment_id):
         log_activity(request.user, "Submitted Assignment", f"Submitted solution for: {assignment.title}")
         check_badges(request.user)
         messages.success(request, f"Assignment '{assignment.title}' submitted successfully!")
-        return redirect('assignment_list')
+        return redirect('assignment_detail', assignment_id=assignment.id)
     return redirect('assignment_detail', assignment_id=assignment_id)
 
 
