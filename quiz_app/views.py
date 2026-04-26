@@ -1779,7 +1779,13 @@ def edit_assignment(request, assignment_id):
         assignment.title = request.POST.get('title')
         assignment.description = request.POST.get('description')
         assignment.total_marks = request.POST.get('total_marks', 100)
-        assignment.deadline = request.POST.get('deadline')
+        
+        deadline = request.POST.get('deadline')
+        if not deadline:
+            messages.error(request, "Deadline is required.")
+            return render(request, 'edit_assignment.html', {'assignment': assignment})
+            
+        assignment.deadline = deadline
         
         if request.FILES.get('requirements_file'):
             assignment.requirements_file = request.FILES['requirements_file']
@@ -1864,6 +1870,10 @@ def add_assignment(request):
         deadline = request.POST.get('deadline')
         req_file = request.FILES.get('requirements_file')
         
+        if not deadline:
+            messages.error(request, "Deadline is required.")
+            return render(request, 'add_assignment.html')
+            
         new_assignment = Assignment.objects.create(
             title=title,
             description=description,
