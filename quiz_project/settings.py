@@ -132,6 +132,10 @@ if os.environ.get('VERCEL') or not DEBUG:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
+# Added for larger profile image uploads
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
