@@ -808,7 +808,7 @@ def admin_dashboard(request):
         'total_quizzes': quizzes.count(),
         'total_attempts': all_attempts.count(),
         'total_warnings': WarningLog.objects.count(),
-        'total_students': User.objects.filter(student_profile__isnull=False).count(),
+        'total_students': User.objects.filter(student_profile__isnull=False, is_staff=False, is_superuser=False).count(),
     }
     return render(request, 'admin_dashboard.html', context)
 
@@ -1339,7 +1339,7 @@ def leaderboard(request):
     if selected_quiz_id:
         selected_quiz = get_object_or_404(Quiz, id=selected_quiz_id)
         # Fetch all registered students
-        students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
+        students = User.objects.filter(student_profile__isnull=False, is_staff=False, is_superuser=False).select_related('student_profile')
         
         temp_data = []
         for student in students:
@@ -1370,7 +1370,7 @@ def leaderboard(request):
         # All students combined — even those with no activity yet
         # Uses the unified scoring system: (Attendance*5) + Best Quiz Marks + Assignment Marks
         from django.db.models import Sum, Count, Max
-        students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
+        students = User.objects.filter(student_profile__isnull=False, is_staff=False, is_superuser=False).select_related('student_profile')
 
         temp = []
         for student in students:
@@ -2302,15 +2302,16 @@ def admin_adjust_bonus_marks(request, user_id):
 @login_required
 def student_list(request):
     search_query = request.GET.get('search', '')
+    base_qs = StudentProfile.objects.filter(user__is_staff=False, user__is_superuser=False).select_related('user')
     if search_query:
-        students_qs = StudentProfile.objects.filter(
+        students_qs = base_qs.filter(
             Q(user__first_name__icontains=search_query) | 
             Q(user__last_name__icontains=search_query) |
             Q(student_id__icontains=search_query) |
             Q(user__username__icontains=search_query)
-        ).select_related('user').order_by('student_id')
+        ).order_by('student_id')
     else:
-        students_qs = StudentProfile.objects.exclude(user__is_staff=True).select_related('user').order_by('student_id')
+        students_qs = base_qs.order_by('student_id')
     
     # Convert to list to reorder
     students_list = list(students_qs)
