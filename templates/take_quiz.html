@@ -106,6 +106,11 @@
         min-height: 100vh;
         background: #f8fafc;
         padding-bottom: 5rem;
+        /* Anti-Copy Measures */
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
     }
 
     /* Premium Header */
@@ -597,19 +602,71 @@ function submitQuiz() {
 }
 
 function setupAntiCheat() {
+    // 1. Tab Switch Detection
     document.addEventListener('visibilitychange', function() {
         if (document.hidden && !quizSubmitted) {
-            fetch('/quiz/log-warning/', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
-                body: JSON.stringify({attempt_id: attemptId, warning_type: 'tab_switch'})
-            }).then(r => r.json()).then(data => {
-                if (data.action === 'warning') showWarningAlert(data.message);
-                else if (data.action === 'disqualified') submitQuiz();
-            });
+            logWarning('tab_switch', 'Warning: Tab switching is not allowed!');
         }
     });
+
+    // 2. Window Blur (Switching to another app/window)
+    window.addEventListener('blur', function() {
+        if (!quizSubmitted) {
+            logWarning('window_blur', 'Warning: Focus lost! Do not leave the quiz screen.');
+        }
+    });
+
+    // 3. Disable Right Click
     document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 4. Disable Copy, Paste, Cut
+    document.addEventListener('copy', e => e.preventDefault());
+    document.addEventListener('paste', e => e.preventDefault());
+    document.addEventListener('cut', e => e.preventDefault());
+
+    // 5. Disable Keyboard Shortcuts (Ctrl+C, Ctrl+V, Ctrl+U, PrintScreen, F12)
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + C, Ctrl + V, Ctrl + U, Ctrl + Shift + I, Ctrl + S
+        if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 85 || e.keyCode === 73 || e.keyCode === 83)) {
+            e.preventDefault();
+            showWarningAlert('Shortcut blocked for security!');
+            return false;
+        }
+        // PrintScreen
+        if (e.key === 'PrintScreen') {
+            e.preventDefault();
+            logWarning('screenshot_attempt', 'Screenshot detected! This is strictly prohibited.');
+            return false;
+        }
+        // F12
+        if (e.keyCode === 123) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // 6. Alert on Print Attempt
+    window.onbeforeprint = (e) => {
+        e.preventDefault();
+        showWarningAlert('Printing is disabled during the quiz.');
+        return false;
+    };
+}
+
+function logWarning(type, message) {
+    if (quizSubmitted) return;
+    
+    fetch('/quiz/log-warning/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({attempt_id: attemptId, warning_type: type})
+    }).then(r => r.json()).then(data => {
+        if (data.action === 'warning') {
+            showWarningAlert(message || data.message);
+        } else if (data.action === 'disqualified') {
+            submitQuiz();
+        }
+    });
 }
 </script>
 {% endblock %}
