@@ -1854,6 +1854,7 @@ def admin_adjust_bonus_marks(request, user_id):
                 setattr(profile, field_name, current_val + amount)
             elif action == 'minus':
                 setattr(profile, field_name, current_val - amount)
+
             
             profile.save()
             return JsonResponse({
