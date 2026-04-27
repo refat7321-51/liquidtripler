@@ -513,7 +513,7 @@ def student_profile(request):
         'my_rank': my_rank,
         'total_students': len(temp),
         'total_marks': total_marks,
-        'attendance_count': att_count_self,
+        'attendance_count': profile.attendance_count,
         'attendance_score': attendance_score,
         'quiz_score': quiz_score,
         'assignment_score': assignment_score,
