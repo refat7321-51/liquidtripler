@@ -885,6 +885,17 @@
         
         if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
         if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', handleLogout);
+
+        // ✅ Fix: Reset sidebar on back button (bfcache restore)
+        window.addEventListener('pageshow', function(e) {
+            if (e.persisted) {
+                // Page restored from bfcache — force sidebar closed
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                if (mobileToggle) mobileToggle.classList.remove('is-open');
+                document.body.style.overflow = '';
+            }
+        });
     </script>
     <!-- Flatpickr JS -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
