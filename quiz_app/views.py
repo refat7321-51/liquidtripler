@@ -2023,16 +2023,29 @@ def attendance_report(request):
         except:
             pass
 
+        from datetime import datetime, timedelta
+        try:
+            start_dt = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_dt = datetime.strptime(end_date, '%Y-%m-%d').date()
+            total_days_in_range = (end_dt - start_dt).days + 1
+        except Exception:
+            total_days_in_range = None
+
         students = StudentProfile.objects.filter(user__is_staff=False).select_related('user').order_by('student_id')
         for student in students:
             attendances = Attendance.objects.filter(student=student, date__range=[start_date, end_date])
             present_count = attendances.filter(status='Present').count()
-            total_count = attendances.count()
+            recorded_count = attendances.count()
+
+            # Total days = actual calendar days in range
+            total = total_days_in_range if total_days_in_range else recorded_count
+            absent_count = total - present_count
+
             report_data.append({
                 'student': student,
                 'present': present_count,
-                'absent': total_count - present_count,
-                'total': total_count
+                'absent': absent_count if absent_count >= 0 else 0,
+                'total': total
             })
 
     return render(request, 'attendance_report.html', {
