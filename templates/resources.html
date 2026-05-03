@@ -228,7 +228,6 @@
         text-transform: uppercase;
         padding: 3px 8px;
         border-radius: 6px;
-        margin-bottom: 0.75rem;
         display: inline-block;
     }
 
@@ -363,12 +362,12 @@
                             {% endif %}
                         </div>
                         <div class="card-body">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <span class="card-tag {% if 'video' in resource.category or 'recording' in resource.category %}thumb-video{% elif 'pdf' in resource.category %}thumb-pdf{% elif 'code' in resource.category %}thumb-code{% endif %}" style="background: rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                                <span class="card-tag {% if 'video' in resource.category or 'recording' in resource.category %}thumb-video{% elif 'pdf' in resource.category %}thumb-pdf{% elif 'code' in resource.category %}thumb-code{% endif %}" style="background: rgba(0,0,0,0.05); margin: 0;">
                                     {{ resource.get_category_display }}
                                 </span>
                                 {% if user.is_staff %}
-                                <button onclick="event.stopPropagation(); showDeleteModal('{% url 'delete_resource' resource.id %}', '{{ resource.title|escapejs }}', this)" style="background: #fee2e2; color: #ef4444; border: none; width: 28px; height: 28px; border-radius: 6px; cursor: pointer;">
+                                <button onclick="event.stopPropagation(); showDeleteModal('{% url 'delete_resource' resource.id %}', '{{ resource.title|escapejs }}', this)" style="background: #fee2e2; color: #ef4444; border: none; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
                                     <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
                                 </button>
                                 {% endif %}
