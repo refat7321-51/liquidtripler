@@ -330,7 +330,6 @@
         <button class="filter-tab active" onclick="filterResources('all', this)"><i class="fas fa-th-large"></i> All Items</button>
         <button class="filter-tab" onclick="filterResources('recording', this)"><i class="fas fa-video"></i> Class Recordings</button>
         <button class="filter-tab" onclick="filterResources('code', this)"><i class="fas fa-code"></i> Source Code</button>
-        <button class="filter-tab" onclick="filterResources('video', this)"><i class="fas fa-play"></i> Other Videos</button>
     </div>
 
     <!-- Folders List -->
@@ -466,7 +465,6 @@
                 <select name="category" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 0.95rem; outline: none; background: white; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 0.65rem auto;">
                     <option value="recording">Class Recording</option>
                     <option value="code">Code File</option>
-                    <option value="video">Other Video</option>
                 </select>
             </div>
             <div id="uploadArea" onclick="document.getElementById('fileInput').click()" style="width: 100%; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8fafc; box-sizing: border-box;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
