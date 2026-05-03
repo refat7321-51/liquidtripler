@@ -556,10 +556,10 @@
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
 <!-- Delete Session Confirmation Modal -->
@@ -722,6 +722,7 @@
         const loader = document.getElementById('pdfLoader');
         
         pagesContainer.innerHTML = '';
+        loader.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><span>Rendering Document...</span>';
         loader.style.display = 'flex';
         document.getElementById('pdfModalTitle').innerText = title;
         document.getElementById('pdfDownloadBtn').href = url;
@@ -729,7 +730,13 @@
         document.body.style.overflow = 'hidden';
 
         try {
-            const loadingTask = pdfjsLib.getDocument(url);
+            // Use fetch to get the blob first, which is more robust
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const loadingTask = pdfjsLib.getDocument(blobUrl);
             const pdf = await loadingTask.promise;
             loader.style.display = 'none';
 
@@ -745,7 +752,8 @@
                 canvas.style.height = 'auto';
                 canvas.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
                 canvas.style.borderRadius = '8px';
-                canvas.style.marginBottom = '10px';
+                canvas.style.background = 'white';
+                canvas.style.marginBottom = '20px';
 
                 pagesContainer.appendChild(canvas);
 
@@ -754,9 +762,12 @@
                     viewport: viewport
                 }).promise;
             }
+            
+            // Cleanup
+            URL.revokeObjectURL(blobUrl);
         } catch (err) {
             console.error(err);
-            loader.innerHTML = `<i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ef4444;"></i><span>Error loading PDF. Please download to view.</span>`;
+            loader.innerHTML = `<i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #f87171;"></i><span style="margin-top:10px;">Error loading PDF.</span><a href="${url}" download style="color: #60a5fa; text-decoration: underline; margin-top: 5px;">Download to view instead</a>`;
         }
     }
 
