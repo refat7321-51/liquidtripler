@@ -304,10 +304,10 @@
 
     <!-- Category Filters -->
     <div class="filter-tabs">
-        <div class="filter-tab active" onclick="filterResources('all', this)"><i class="fas fa-th-large"></i> All Items</div>
-        <div class="filter-tab" onclick="filterResources('recording', this)"><i class="fas fa-video"></i> Recordings</div>
-        <div class="filter-tab" onclick="filterResources('pdf', this)"><i class="fas fa-file-image"></i> PDF / Image</div>
-        <div class="filter-tab" onclick="filterResources('code', this)"><i class="fas fa-file-code"></i> Code</div>
+        <button class="filter-tab active" onclick="filterResources('all', this)"><i class="fas fa-th-large"></i> All Items</button>
+        <button class="filter-tab" onclick="filterResources('recording', this)"><i class="fas fa-video"></i> Class Recordings</button>
+        <button class="filter-tab" onclick="filterResources('code', this)"><i class="fas fa-code"></i> Source Code</button>
+        <button class="filter-tab" onclick="filterResources('video', this)"><i class="fas fa-play"></i> Other Videos</button>
     </div>
 
     <!-- Folders List -->
@@ -362,8 +362,6 @@
                                 <!-- Image thumb, no icon needed -->
                             {% elif 'video' in resource.category or 'recording' in resource.category %}
                                 <i class="fas fa-play-circle"></i>
-                            {% elif 'pdf' in resource.category %}
-                                <i class="fas fa-file-pdf"></i>
                             {% elif 'code' in resource.category %}
                                 <i class="fas fa-file-code"></i>
                             {% else %}
@@ -372,7 +370,7 @@
                         </div>
                         <div class="card-body">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                                <span class="card-tag {% if 'video' in resource.category or 'recording' in resource.category %}thumb-video{% elif 'pdf' in resource.category %}thumb-pdf{% elif 'code' in resource.category %}thumb-code{% endif %}" style="background: rgba(0,0,0,0.05); margin: 0;">
+                                <span class="card-tag {% if 'video' in resource.category or 'recording' in resource.category %}thumb-video{% elif 'code' in resource.category %}thumb-code{% endif %}" style="background: rgba(0,0,0,0.05); margin: 0;">
                                     {{ resource.get_category_display }}
                                 </span>
                                 {% if user.is_staff %}
@@ -444,7 +442,6 @@
                 <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">Category</label>
                 <select name="category" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 0.95rem; outline: none; background: white; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 0.65rem auto;">
                     <option value="recording">Class Recording</option>
-                    <option value="pdf">PDF / Image</option>
                     <option value="code">Code File</option>
                     <option value="video">Other Video</option>
                 </select>
@@ -691,7 +688,7 @@
             const cards = folder.querySelectorAll('.resource-card');
             cards.forEach(card => {
                 const cat = card.getAttribute('data-category');
-                const show = (category === 'all' || cat === category || (category === 'pdf' && (cat === 'pdf' || cat === 'code')));
+                const show = (category === 'all' || cat === category);
                 card.style.display = show ? 'flex' : 'none';
                 if (show) visible++;
             });
