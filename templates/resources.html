@@ -464,13 +464,13 @@
                 <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">Category</label>
                 <select name="category" required style="width: 100%; padding: 0.8rem 1rem; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 0.95rem; outline: none; background: white; box-sizing: border-box; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2364748B%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 0.65rem auto;">
                     <option value="recording">Class Recording</option>
-                    <option value="code">Source Code (HTML/CSS/JS/ZIP)</option>
+                    <option value="code">Source Code (HTML/CSS/JS/MD/ZIP)</option>
                 </select>
             </div>
             <div id="uploadArea" onclick="document.getElementById('fileInput').click()" style="width: 100%; border: 2px dashed #cbd5e1; border-radius: 16px; padding: 1.25rem; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8fafc; box-sizing: border-box;" onmouseover="this.style.borderColor='#3b82f6'; this.style.background='#eff6ff';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
                 <div style="font-size: 1.5rem; color: #3b82f6; margin-bottom: 0.5rem;"><i class="fas fa-cloud-upload-alt"></i></div>
                 <div style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">Click or Drop files here</div>
-                <input type="file" id="fileInput" name="files" multiple accept=".html,.css,.js,.php,.py,.zip,.rar,.txt,.pdf,.docx" style="display: none;" onchange="updateFileList(this.files)">
+                <input type="file" id="fileInput" name="files" multiple accept=".html,.css,.js,.php,.py,.zip,.rar,.txt,.pdf,.docx,.md" style="display: none;" onchange="updateFileList(this.files)">
                 <div id="fileListContainer" style="margin-top: 1rem; text-align: left; max-height: 120px; overflow-y: auto; padding: 0.5rem; background: white; border-radius: 8px; border: 1px solid #f1f5f9; display: none;">
                     <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; margin-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.25rem;">SELECTED FILES:</div>
                     <ul id="selectedFilesList" style="list-style: none; padding: 0; margin: 0; font-size: 0.8rem; color: #475569;"></ul>
