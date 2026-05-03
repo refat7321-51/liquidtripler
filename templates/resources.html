@@ -31,29 +31,52 @@
         gap: 0.75rem;
         margin-bottom: 2rem;
         overflow-x: auto;
-        padding-bottom: 0.5rem;
+        padding: 4px;
+        padding-bottom: 0.75rem;
         scrollbar-width: none;
+        -ms-overflow-style: none;
     }
     .filter-tabs::-webkit-scrollbar { display: none; }
 
     .filter-tab {
-        padding: 0.6rem 1.25rem;
-        border-radius: 12px;
+        padding: 0.7rem 1.4rem;
+        border-radius: 14px;
         font-size: 0.9rem;
         font-weight: 700;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         background: white;
         color: #64748b;
         border: 1px solid #e2e8f0;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        outline: none;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .filter-tab i {
+        font-size: 0.9rem;
+        opacity: 0.7;
+    }
+
+    .filter-tab:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        background: #eff6ff;
+        transform: translateY(-1px);
     }
 
     .filter-tab.active {
         background: #3b82f6;
-        color: white;
+        color: white !important;
         border-color: #3b82f6;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+    }
+
+    .filter-tab.active i {
+        opacity: 1;
     }
 
     /* Accordion Styles */
