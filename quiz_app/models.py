@@ -235,6 +235,12 @@ class Resource(models.Model):
     resource_date = models.DateField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def display_title(self):
+        if self.category == 'code' and ' - ' in self.title:
+            return self.title.split(' - ')[-1]
+        return self.title
+
     def __str__(self):
         return f"[{self.category}] {self.title}"
 

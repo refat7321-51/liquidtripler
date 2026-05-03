@@ -1578,7 +1578,10 @@ def add_resource(request):
         if files:
             for f in files:
                 try:
-                    title = f"{title_prefix} - {f.name}" if (len(files) > 1 or video_url) else title_prefix
+                    if category == 'code':
+                        title = f.name
+                    else:
+                        title = f"{title_prefix} - {f.name}" if (len(files) > 1 or video_url) else title_prefix
                     Resource.objects.create(
                         title=title,
                         category=category,
