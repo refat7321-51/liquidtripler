@@ -411,15 +411,9 @@
                                     <button class="btn-action" style="background: #3b82f6; color: white;" onclick="openVideoPlayer('{{ resource.file.url }}', '{{ resource.title }}')"><i class="fas fa-play"></i> <span>Watch Now</span></button>
                                 {% endif %}
                             {% elif resource.file %}
-                                {% if ".png" in resource.file.url|lower or ".jpg" in resource.file.url|lower or ".jpeg" in resource.file.url|lower %}
-                                    <a href="{{ resource.file.url }}" class="dl-link" style="display: none;" download></a>
-                                {% else %}
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <button onclick="openPDFViewer('{% url 'view_resource_file' resource.id %}', '{{ resource.title|escapejs }}')" class="btn-action" style="background: #3b82f6; color: white; flex: 1;">
-                                            <i class="fas fa-eye"></i> <span>View Resources</span>
-                                        </button>
-                                    </div>
-                                {% endif %}
+                                <a href="{{ resource.file.url }}" class="dl-link btn-action" style="background: #3b82f6; color: white; text-decoration: none;" download>
+                                    <i class="fas fa-download"></i> <span>Download</span>
+                                </a>
                             {% endif %}
                         </div>
                     </div>
@@ -611,10 +605,12 @@
         }
     }
 
-    let currentLinks = [];
     async function downloadAllFiles(btn) {
         const folder = btn.closest('.session-folder');
         const sessionTitle = folder.querySelector('.folder-text h3').innerText.trim().replace(/[/\\?%*:|"<>]/g, '-');
+        
+        // Find all links with .dl-link within this folder
+        // These are our study materials (Code, Images, Docs)
         currentLinks = Array.from(folder.querySelectorAll('.dl-link'));
         
         const modal = document.getElementById('downloadModal');
@@ -623,7 +619,7 @@
         const cancelBtn = modal.querySelector('button[onclick="closeDownloadModal()"]');
 
         if (currentLinks.length === 0) {
-            msg.innerHTML = `<i class="fas fa-info-circle" style="color: #64748b; font-size: 2rem; display: block; margin-bottom: 1rem;"></i> No downloadable materials (PDF/Code) found in this session.`;
+            msg.innerHTML = `<i class="fas fa-info-circle" style="color: #64748b; font-size: 2rem; display: block; margin-bottom: 1rem;"></i> No study materials (Code/Images/Docs) found in this session.`;
             confirmBtn.style.display = 'none';
             cancelBtn.innerText = 'OK';
             cancelBtn.style.flex = '1';
@@ -631,11 +627,10 @@
             return;
         }
 
-        // Reset modal for normal download
         confirmBtn.style.display = 'block';
         cancelBtn.innerText = 'Cancel';
         cancelBtn.style.flex = '1';
-        msg.innerHTML = `You are about to download <b>${currentLinks.length}</b> study material(s).<br><span style="font-size: 0.8rem; color: #94a3b8;">${currentLinks.length > 1 ? 'Files will be zipped into a single folder.' : ''}</span>`;
+        msg.innerHTML = `You are about to download <b>${currentLinks.length}</b> material(s).<br><span style="font-size: 0.8rem; color: #94a3b8;">Recordings are not included in study material ZIPs.</span>`;
         
         confirmBtn.onclick = async function() {
             closeDownloadModal();
@@ -650,16 +645,22 @@
             } else {
                 const zip = new JSZip();
                 const btnOriginalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing ZIP...';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zipping...';
                 btn.style.opacity = '0.7';
                 btn.disabled = true;
 
                 try {
                     for (const link of currentLinks) {
                         const response = await fetch(link.href);
-                        if (!response.ok) throw new Error('File download failed');
+                        if (!response.ok) continue;
                         const blob = await response.blob();
-                        const filename = link.href.split('/').pop().split('?')[0];
+                        // Try to get filename from URL or title
+                        let filename = link.href.split('/').pop().split('?')[0];
+                        if (!filename || filename.length < 3) {
+                            const card = link.closest('.resource-card');
+                            const title = card.querySelector('h4').innerText.trim().replace(/[/\\?%*:|"<>]/g, '_');
+                            filename = `${title}_file`;
+                        }
                         zip.file(filename, blob);
                     }
 
@@ -667,7 +668,7 @@
                     const zipUrl = URL.createObjectURL(content);
                     const a = document.createElement('a');
                     a.href = zipUrl;
-                    a.download = `${sessionTitle}.zip`;
+                    a.download = `${sessionTitle}_Materials.zip`;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
