@@ -17,9 +17,20 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
     
     {% block extra_css %}{% endblock %}
-    <style>
-        /* Custom Flatpickr Theme to match Liquid_Tripple_R */
-        .flatpickr-calendar {
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Outfit', 'Segoe UI', sans-serif;
+        background: #f1f5f9;
+        color: #1e293b;
+        overflow-x: hidden;
+    }
+
+    /* Custom Flatpickr Theme to match Liquid_Tripple_R */
+    .flatpickr-calendar {
             background: #ffffff;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
             border: 1px solid #e2e8f0 !important;
@@ -92,8 +103,7 @@
             background: #4f46e5 !important;
         }
 
-        /* Fallback / Critical Path Styles */
-        body { margin: 0; font-family: 'Outfit', 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; }
+        /* Fallback / Critical Path Styles (Cleaned up as handled above) */
         
         .brand-logo {
             font-family: 'Russo One', sans-serif;
@@ -181,8 +191,13 @@
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
         }
 
-        .sidebar-profile img { width: 80px !important; height: 80px !important; border-radius: 50%; object-fit: cover; }
-        .main-content-area { margin-left: 260px; flex: 1; min-width: 0; position: relative; }
+        .main-content-area { 
+            padding-left: 260px; 
+            width: 100%;
+            min-height: 100vh;
+            position: relative; 
+            transition: padding-left 0.3s ease;
+        }
         
         .top-navbar { 
             background: rgba(255, 255, 255, 0.7); 
@@ -247,7 +262,7 @@
                 transform: translateX(0) !important;
                 box-shadow: 10px 0 30px rgba(0,0,0,0.5);
             }
-            .main-content-area { margin-left: 0; width: 100%; }
+            .main-content-area { padding-left: 0; width: 100%; }
             .hamburger-toggle { 
                 display: flex !important; 
                 flex-direction: column;
@@ -288,7 +303,7 @@
 
         /* Class to handle full-width content when sidebar is hidden */
         .main-content-area.no-sidebar {
-            margin-left: 0 !important;
+            padding-left: 0 !important;
             width: 100% !important;
         }
         /* Global Modal & Scroll Fix */
