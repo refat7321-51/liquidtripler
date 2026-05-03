@@ -395,11 +395,11 @@
                                     <a href="{{ resource.file.url }}" class="dl-link" style="display: none;" download></a>
                                 {% else %}
                                     <div style="display: flex; gap: 0.5rem;">
-                                        <a href="{{ resource.file.url }}" target="_blank" class="btn-action" style="background: #eff6ff; color: #3b82f6; flex: 1; border: 1px solid #dbeafe;">
-                                            <i class="fas fa-eye"></i> View
+                                        <a href="{{ resource.file.url }}" target="_blank" class="btn-action" style="background: #eff6ff; color: #3b82f6; flex: 1; border: 1px solid #dbeafe;" {% if ".pdf" in resource.file.url|lower %}type="application/pdf"{% endif %}>
+                                            <i class="fas fa-eye"></i> <span>View</span>
                                         </a>
                                         <a href="{{ resource.file.url }}" class="btn-action dl-link" style="background: #f8fafc; color: #475569; flex: 1; border: 1px solid #e2e8f0;" download>
-                                            <i class="fas fa-download"></i> Download
+                                            <i class="fas fa-download"></i> <span>Download</span>
                                         </a>
                                     </div>
                                 {% endif %}
