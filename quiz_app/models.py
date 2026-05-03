@@ -4,6 +4,19 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import os
+from django.conf import settings
+from django.core.files.storage import default_storage
+
+# Use Raw storage for Cloudinary in production to support HTML/CSS/JS/ZIP etc.
+# MediaCloudinaryStorage defaults to 'image' which fails for non-image files.
+if os.environ.get('VERCEL') or not settings.DEBUG:
+    try:
+        from cloudinary_storage.storage import RawMediaCloudinaryStorage
+        resource_storage = RawMediaCloudinaryStorage()
+    except ImportError:
+        resource_storage = default_storage
+else:
+    resource_storage = default_storage
 
 
 class Quiz(models.Model):
@@ -216,7 +229,7 @@ class Resource(models.Model):
     ]
     title = models.CharField(max_length=255)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-    file = models.FileField(upload_to='resources/', null=True, blank=True)
+    file = models.FileField(upload_to='resources/', storage=resource_storage, null=True, blank=True)
     video_url = models.URLField(blank=True, null=True)
     description = models.TextField(blank=True)
     resource_date = models.DateField(default=timezone.now)
