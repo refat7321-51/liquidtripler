@@ -550,11 +550,20 @@
             </div>
         </div>
         <div style="flex: 1; background: #525659; display: flex; align-items: center; justify-content: center; position: relative;">
-            <div id="pdfLoader" style="position: absolute; color: white; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+            <div id="pdfLoader" style="position: absolute; color: white; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 5;">
                 <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
                 <span>Loading Document...</span>
             </div>
-            <iframe id="pdfFrame" src="" style="width: 100%; height: 100%; border: none; position: relative; z-index: 1;" onload="document.getElementById('pdfLoader').style.display='none'"></iframe>
+            <object id="pdfObject" data="" type="application/pdf" style="width: 100%; height: 100%; position: relative; z-index: 10;" onload="document.getElementById('pdfLoader').style.display='none'">
+                <div style="color: white; text-align: center; padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+                    <i class="fas fa-file-pdf" style="font-size: 4rem; color: #f87171;"></i>
+                    <div>
+                        <h4 style="margin: 0 0 0.5rem;">Unable to display PDF</h4>
+                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Your browser doesn't support inline PDF viewing.</p>
+                    </div>
+                    <a id="pdfFallbackBtn" href="#" download class="btn-action" style="background: #3b82f6; color: white; border: none; padding: 0.8rem 2rem; border-radius: 12px; text-decoration: none; font-weight: 700;">Download to View</a>
+                </div>
+            </object>
         </div>
     </div>
 </div>
@@ -715,21 +724,27 @@
 
     function openPDFViewer(url, title) {
         const modal = document.getElementById('pdfModal');
-        const frame = document.getElementById('pdfFrame');
+        const pdfObj = document.getElementById('pdfObject');
         const loader = document.getElementById('pdfLoader');
+        const fallbackBtn = document.getElementById('pdfFallbackBtn');
+        
+        // Ensure full URL for object tag
+        const fullUrl = url.startsWith('http') ? url : window.location.origin + url;
         
         loader.style.display = 'flex';
-        frame.src = url;
+        pdfObj.data = fullUrl;
+        fallbackBtn.href = fullUrl;
+        
         document.getElementById('pdfModalTitle').innerText = title;
-        document.getElementById('pdfDownloadBtn').href = url;
+        document.getElementById('pdfDownloadBtn').href = fullUrl;
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
 
     function closePDFViewer() {
         const modal = document.getElementById('pdfModal');
-        const frame = document.getElementById('pdfFrame');
-        frame.src = '';
+        const pdfObj = document.getElementById('pdfObject');
+        pdfObj.data = '';
         modal.style.display = 'none';
         document.body.style.overflow = '';
     }
