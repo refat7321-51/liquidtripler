@@ -395,12 +395,9 @@
                                     <a href="{{ resource.file.url }}" class="dl-link" style="display: none;" download></a>
                                 {% else %}
                                     <div style="display: flex; gap: 0.5rem;">
-                                        <button onclick="openPDFViewer('{{ resource.file.url }}', '{{ resource.title|escapejs }}')" class="btn-action" style="background: #eff6ff; color: #3b82f6; flex: 1; border: 1px solid #dbeafe;">
-                                            <i class="fas fa-eye"></i> <span>View</span>
+                                        <button onclick="openPDFViewer('{{ resource.file.url }}', '{{ resource.title|escapejs }}')" class="btn-action" style="background: #3b82f6; color: white; flex: 1;">
+                                            <i class="fas fa-eye"></i> <span>View Resources</span>
                                         </button>
-                                        <a href="{{ resource.file.url }}" class="btn-action dl-link" style="background: #f8fafc; color: #475569; flex: 1; border: 1px solid #e2e8f0;" download>
-                                            <i class="fas fa-download"></i> <span>Download</span>
-                                        </a>
                                     </div>
                                 {% endif %}
                             {% endif %}
@@ -549,24 +546,21 @@
                 <button onclick="closePDFViewer()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b;"><i class="fas fa-times"></i></button>
             </div>
         </div>
-        <div style="flex: 1; background: #525659; display: flex; align-items: center; justify-content: center; position: relative;">
-            <div id="pdfLoader" style="position: absolute; color: white; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 5;">
+        <div id="pdfViewerContainer" style="flex: 1; background: #525659; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 20px; position: relative;">
+            <div id="pdfLoader" style="position: sticky; top: 50%; transform: translateY(-50%); color: white; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 5;">
                 <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
-                <span>Loading Document...</span>
+                <span>Rendering Document...</span>
             </div>
-            <object id="pdfObject" data="" type="application/pdf" style="width: 100%; height: 100%; position: relative; z-index: 10;" onload="document.getElementById('pdfLoader').style.display='none'">
-                <div style="color: white; text-align: center; padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
-                    <i class="fas fa-file-pdf" style="font-size: 4rem; color: #f87171;"></i>
-                    <div>
-                        <h4 style="margin: 0 0 0.5rem;">Unable to display PDF</h4>
-                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Your browser doesn't support inline PDF viewing.</p>
-                    </div>
-                    <a id="pdfFallbackBtn" href="#" download class="btn-action" style="background: #3b82f6; color: white; border: none; padding: 0.8rem 2rem; border-radius: 12px; text-decoration: none; font-weight: 700;">Download to View</a>
-                </div>
-            </object>
+            <div id="pdfPages" style="display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center;"></div>
         </div>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
 
 <!-- Delete Session Confirmation Modal -->
 
@@ -722,30 +716,53 @@
         player.src = '';
     }
 
-    function openPDFViewer(url, title) {
+    async function openPDFViewer(url, title) {
         const modal = document.getElementById('pdfModal');
-        const pdfObj = document.getElementById('pdfObject');
+        const pagesContainer = document.getElementById('pdfPages');
         const loader = document.getElementById('pdfLoader');
-        const fallbackBtn = document.getElementById('pdfFallbackBtn');
         
-        // Ensure full URL for object tag
-        const fullUrl = url.startsWith('http') ? url : window.location.origin + url;
-        
+        pagesContainer.innerHTML = '';
         loader.style.display = 'flex';
-        pdfObj.data = fullUrl;
-        fallbackBtn.href = fullUrl;
-        
         document.getElementById('pdfModalTitle').innerText = title;
-        document.getElementById('pdfDownloadBtn').href = fullUrl;
+        document.getElementById('pdfDownloadBtn').href = url;
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+
+        try {
+            const loadingTask = pdfjsLib.getDocument(url);
+            const pdf = await loadingTask.promise;
+            loader.style.display = 'none';
+
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.5 });
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                canvas.style.maxWidth = '100%';
+                canvas.style.height = 'auto';
+                canvas.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+                canvas.style.borderRadius = '8px';
+                canvas.style.marginBottom = '10px';
+
+                pagesContainer.appendChild(canvas);
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+            }
+        } catch (err) {
+            console.error(err);
+            loader.innerHTML = `<i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ef4444;"></i><span>Error loading PDF. Please download to view.</span>`;
+        }
     }
 
     function closePDFViewer() {
-        const modal = document.getElementById('pdfModal');
-        const pdfObj = document.getElementById('pdfObject');
-        pdfObj.data = '';
-        modal.style.display = 'none';
+        document.getElementById('pdfModal').style.display = 'none';
+        document.getElementById('pdfPages').innerHTML = '';
         document.body.style.overflow = '';
     }
 
