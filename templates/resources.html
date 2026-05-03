@@ -249,9 +249,11 @@
     }
     .btn-action i {
         font-size: 1rem;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        position: relative;
+        top: 1px; /* Nudge down to align with text baseline */
     }
 
     @keyframes fadeIn {
@@ -383,13 +385,9 @@
                             
                             {% if 'video' in resource.category or 'recording' in resource.category %}
                                 {% if resource.video_url %}
-                                    <a href="{{ resource.video_url }}" target="_blank" class="btn-action" style="background: #3b82f6; color: white;">
-                                        <i class="fas fa-external-link-alt"></i> Watch Recording
-                                    </a>
+                                    <a href="{{ resource.video_url }}" target="_blank" class="btn-action" style="background: #3b82f6; color: white;"><i class="fas fa-external-link-alt"></i> <span>Watch Recording</span></a>
                                 {% elif resource.file %}
-                                    <button class="btn-action" style="background: #3b82f6; color: white;" onclick="openVideoPlayer('{{ resource.file.url }}', '{{ resource.title }}')">
-                                        <i class="fas fa-play"></i> Watch Now
-                                    </button>
+                                    <button class="btn-action" style="background: #3b82f6; color: white;" onclick="openVideoPlayer('{{ resource.file.url }}', '{{ resource.title }}')"><i class="fas fa-play"></i> <span>Watch Now</span></button>
                                 {% endif %}
                             {% elif resource.file %}
                                 {% if ".png" in resource.file.url|lower or ".jpg" in resource.file.url|lower or ".jpeg" in resource.file.url|lower %}
