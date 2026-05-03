@@ -395,7 +395,7 @@
                                     <a href="{{ resource.file.url }}" class="dl-link" style="display: none;" download></a>
                                 {% else %}
                                     <div style="display: flex; gap: 0.5rem;">
-                                        <button onclick="openPDFViewer('{{ resource.file.url }}', '{{ resource.title|escapejs }}')" class="btn-action" style="background: #3b82f6; color: white; flex: 1;">
+                                        <button onclick="openPDFViewer('{% url 'view_resource_file' resource.id %}', '{{ resource.title|escapejs }}')" class="btn-action" style="background: #3b82f6; color: white; flex: 1;">
                                             <i class="fas fa-eye"></i> <span>View Resources</span>
                                         </button>
                                     </div>
@@ -546,12 +546,12 @@
                 <button onclick="closePDFViewer()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: #64748b;"><i class="fas fa-times"></i></button>
             </div>
         </div>
-        <div id="pdfViewerContainer" style="flex: 1; background: #525659; overflow-y: auto; display: flex; flex-direction: column; align-items: center; padding: 20px; gap: 20px; position: relative;">
-            <div id="pdfLoader" style="position: sticky; top: 50%; transform: translateY(-50%); color: white; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 5;">
+        <div id="pdfViewerContainer" style="flex: 1; background: #525659; overflow: hidden; display: flex; flex-direction: column; align-items: center; position: relative;">
+            <div id="pdfLoader" style="position: absolute; top: 50%; transform: translateY(-50%); color: white; display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 5;">
                 <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
-                <span>Rendering Document...</span>
+                <span>Opening Viewer...</span>
             </div>
-            <div id="pdfPages" style="display: flex; flex-direction: column; gap: 20px; width: 100%; align-items: center;"></div>
+            <iframe id="pdfFrame" src="" style="width: 100%; height: 100%; border: none; position: relative; z-index: 10;" onload="document.getElementById('pdfLoader').style.display='none'"></iframe>
         </div>
     </div>
 </div>
@@ -716,64 +716,22 @@
         player.src = '';
     }
 
-    async function openPDFViewer(url, title) {
+    function openPDFViewer(url, title) {
         const modal = document.getElementById('pdfModal');
-        const pagesContainer = document.getElementById('pdfPages');
+        const frame = document.getElementById('pdfFrame');
         const loader = document.getElementById('pdfLoader');
         
-        pagesContainer.innerHTML = '';
-        loader.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><span>Rendering Document...</span>';
         loader.style.display = 'flex';
+        frame.src = url;
         document.getElementById('pdfModalTitle').innerText = title;
         document.getElementById('pdfDownloadBtn').href = url;
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-
-        try {
-            // Use fetch to get the blob first, which is more robust
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Network response was not ok');
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-
-            const loadingTask = pdfjsLib.getDocument(blobUrl);
-            const pdf = await loadingTask.promise;
-            loader.style.display = 'none';
-
-            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                const page = await pdf.getPage(pageNum);
-                const viewport = page.getViewport({ scale: 1.5 });
-                
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                canvas.style.maxWidth = '100%';
-                canvas.style.height = 'auto';
-                canvas.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
-                canvas.style.borderRadius = '8px';
-                canvas.style.background = 'white';
-                canvas.style.marginBottom = '20px';
-
-                pagesContainer.appendChild(canvas);
-
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                }).promise;
-            }
-            
-            // Cleanup
-            URL.revokeObjectURL(blobUrl);
-        } catch (err) {
-            console.error(err);
-            loader.innerHTML = `<i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #f87171;"></i><span style="margin-top:10px;">Error loading PDF.</span><a href="${url}" download style="color: #60a5fa; text-decoration: underline; margin-top: 5px;">Download to view instead</a>`;
-        }
     }
 
     function closePDFViewer() {
         document.getElementById('pdfModal').style.display = 'none';
-        document.getElementById('pdfPages').innerHTML = '';
+        document.getElementById('pdfFrame').src = '';
         document.body.style.overflow = '';
     }
 

@@ -2055,3 +2055,29 @@ def attendance_report(request):
         'start_display': start_display,
         'end_display': end_display
     })
+
+
+from django.http import FileResponse, Http404
+
+def view_resource_file(request, resource_id):
+    try:
+        resource = Resource.objects.get(id=resource_id)
+        if not resource.file:
+            raise Http404("No file associated with this resource")
+            
+        # Check if we are using remote storage (like Cloudinary)
+        if os.environ.get('VERCEL') or not settings.DEBUG:
+            return redirect(resource.file.url)
+            
+        file_path = resource.file.path
+        if not os.path.exists(file_path):
+             raise Http404("File does not exist on server")
+             
+        response = FileResponse(open(file_path, 'rb'), content_type='application/pdf')
+        # Ensure it's displayed inline
+        response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
+        # Security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        return response
+    except Resource.DoesNotExist:
+        raise Http404("Resource not found")

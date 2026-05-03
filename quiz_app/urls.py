@@ -103,4 +103,5 @@ urlpatterns = [
     path('admin/attendance/', views.attendance_dashboard, name='attendance_dashboard'),
     path('admin/attendance/mark/', views.mark_attendance, name='mark_attendance'),
     path('admin/attendance/report/', views.attendance_report, name='attendance_report'),
+    path('resource/<int:resource_id>/view/', views.view_resource_file, name='view_resource_file'),
 ]
