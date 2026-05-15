@@ -1053,6 +1053,51 @@ def log_warning(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
+@login_required
+def fix_quiz_7_data(request):
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    # Try to find Quiz 7
+    quiz = Quiz.objects.filter(Q(id=7) | Q(title__icontains="7")).first()
+    if not quiz:
+        return JsonResponse({'success': False, 'message': 'Quiz 7 not found.'})
+
+    attempts = StudentAttempt.objects.filter(quiz=quiz)
+    updated = []
+
+    for attempt in attempts:
+        warning_count = WarningLog.objects.filter(attempt=attempt).count()
+        attempt.tab_switch_count = warning_count
+        
+        # Recalculate base score first to avoid double penalty
+        correct_count = sum(1 for a in attempt.answers.all() if a.selected_option.is_correct)
+        attempt.score = correct_count
+        
+        status = "Normal"
+        if warning_count >= 2:
+            attempt.score = 0
+            attempt.is_disqualified = True
+            status = "Disqualified"
+        elif warning_count == 1:
+            attempt.score = max(0, attempt.score - 2)
+            status = "Penalty Applied (-2)"
+        
+        attempt.save()
+        updated.append({
+            'student': attempt.student_name,
+            'warnings': warning_count,
+            'final_score': attempt.score,
+            'status': status
+        })
+
+    return JsonResponse({
+        'success': True, 
+        'quiz': quiz.title,
+        'updated_count': len(updated),
+        'details': updated
+    })
+
 
 
 def expired_quiz_answers(request, quiz_id):
@@ -1795,8 +1840,20 @@ def admin_student_progress(request, user_id):
     # Activity Data
     recent_activities = ActivityLog.objects.filter(user=target_user).order_by('-timestamp')[:50]
 
-    # Tab Switches
-    total_tab_switches = sum(a.tab_switch_count for a in StudentAttempt.objects.filter(student=target_user))
+    # Tab Switches (Total from all warnings)
+    total_tab_switches = WarningLog.objects.filter(attempt__student=target_user).count()
+
+    context = {
+        'student_user': target_user,
+        'profile': profile,
+        'attempts': attempts,
+        'submissions': submissions,
+        'recent_activities': recent_activities,
+        'rank': my_rank,
+        'total_marks': student_total_score,
+        'total_tab_switches': total_tab_switches,
+    }
+    return render(request, 'admin_student_progress.html', context)
 
     # Stats for Academic Overview — use centralized helper
     target_sc = calculate_student_score(target_user)
