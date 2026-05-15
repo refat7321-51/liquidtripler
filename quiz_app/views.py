@@ -1000,13 +1000,14 @@ def submit_quiz(request):
             if timezone.now() > grace_time:
                 return JsonResponse({'success': False, 'error': 'Quiz time has expired. Submission not allowed.'}, status=403)
         attempt.calculate_score()
-        # Tab switch penalty: 1st switch = 2 marks minus
-        if not attempt.is_disqualified and attempt.tab_switch_count == 1:
+        # Strictly apply penalties based on Tab Switch count
+        if attempt.tab_switch_count == 1 and not attempt.is_disqualified:
             attempt.score = max(0, attempt.score - 2)
-            attempt.save()
-        elif attempt.is_disqualified:
+        elif attempt.tab_switch_count >= 2 or attempt.is_disqualified:
             attempt.score = 0
-            attempt.save()
+            attempt.is_disqualified = True
+        
+        attempt.save()
         
         # Log activity
         log_activity(request.user, "Completed Quiz", f"Finished quiz: {attempt.quiz.title}")
@@ -1035,19 +1036,19 @@ def log_warning(request):
 
         response_data = {'success': True, 'action': 'none'}
 
-        if warning_type in ['tab_switch', 'window_blur']:
-            attempt.tab_switch_count += 1
-            attempt.save()
+        # Count any cheat activity as a Tab Switch
+        attempt.tab_switch_count += 1
+        attempt.save()
 
-            if attempt.tab_switch_count == 1:
-                response_data['action'] = 'warning'
-                response_data['message'] = '⚠️ সতর্কতা! ট্যাব পরিবর্তন করার জন্য ২ মার্ক কাটা যাবে। ২য় বার করলে কুইজ বাতিল!'
-            elif attempt.tab_switch_count >= 2:
-                attempt.is_disqualified = True
-                attempt.score = 0
-                attempt.save()
-                response_data['action'] = 'disqualified'
-                response_data['message'] = '🚫 কুইজ বাতিল! আপনি ২বার ট্যাব পরিবর্তন করেছেন।'
+        if attempt.tab_switch_count == 1:
+            response_data['action'] = 'warning'
+            response_data['message'] = '🚨 ট্যাব পরিবর্তন করার জন্য আপনার ২ মার্ক কাটা যাবে। ২য় বার করলে কুইজ বাতিল হবে!'
+        else:
+            attempt.is_disqualified = True
+            attempt.score = 0
+            attempt.save()
+            response_data['action'] = 'disqualified'
+            response_data['message'] = '🚫 কুইজ বাতিল! আপনি ২ বার ট্যাব পরিবর্তন করেছেন।'
 
         return JsonResponse(response_data)
     except Exception as e:
