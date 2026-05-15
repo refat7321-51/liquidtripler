@@ -1000,10 +1000,12 @@ def submit_quiz(request):
             if timezone.now() > grace_time:
                 return JsonResponse({'success': False, 'error': 'Quiz time has expired. Submission not allowed.'}, status=403)
         attempt.calculate_score()
-        # Strictly apply penalties based on Tab Switch count
-        if attempt.tab_switch_count == 1 and not attempt.is_disqualified:
+        # Corrected Penalty Rules (1=-2, 2=-5, 3+=Disqualified)
+        if attempt.tab_switch_count == 1:
             attempt.score = max(0, attempt.score - 2)
-        elif attempt.tab_switch_count >= 2 or attempt.is_disqualified:
+        elif attempt.tab_switch_count == 2:
+            attempt.score = max(0, attempt.score - 5)
+        elif attempt.tab_switch_count >= 3 or attempt.is_disqualified:
             attempt.score = 0
             attempt.is_disqualified = True
         
@@ -1017,8 +1019,6 @@ def submit_quiz(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
-@csrf_exempt
-@require_http_methods(["POST"])
 @csrf_exempt
 @require_http_methods(["POST"])
 def log_warning(request):
@@ -1053,6 +1053,9 @@ def log_warning(request):
         if attempt.tab_switch_count == 1:
             response_data['action'] = 'warning'
             response_data['message'] = '🚨 ট্যাব পরিবর্তন করার জন্য আপনার ২ মার্ক কাটা যাবে। ২য় বার করলে কুইজ বাতিল হবে!'
+        elif attempt.tab_switch_count == 2:
+            response_data['action'] = 'warning'
+            response_data['message'] = '🚨 ২য় বার ট্যাব পরিবর্তন! এবার আপনার মোট ৫ মার্ক কাটা যাবে। ৩য় বার করলে কুইজ বাতিল!'
         else:
             attempt.is_disqualified = True
             attempt.score = 0
@@ -1093,14 +1096,18 @@ def fix_all_penalties(request):
         attempt.score = correct_count
         
         status = "Normal"
-        if unique_events >= 2:
+        if unique_events >= 3:
             attempt.score = 0
             attempt.is_disqualified = True
             status = f"Disqualified ({unique_events} events)"
+        elif unique_events == 2:
+            attempt.score = max(0, attempt.score - 5)
+            attempt.is_disqualified = False
+            status = "Penalty Applied (-5 Marks)"
         elif unique_events == 1:
             attempt.score = max(0, attempt.score - 2)
             attempt.is_disqualified = False
-            status = "Penalty Applied (-2)"
+            status = "Penalty Applied (-2 Marks)"
         else:
             attempt.is_disqualified = False
             status = "No Penalty"

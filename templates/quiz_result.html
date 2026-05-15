@@ -54,10 +54,23 @@
             </div>
         </div>
 
-        {% if has_warning %}
-        <div class="warning-banner-result">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>Warning recorded: Tab switching detected during this attempt.</span>
+        {% if attempt.tab_switch_count > 0 or attempt.is_disqualified %}
+        <div class="warning-banner-result" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; background: #fff1f2; border: 1px solid #fecaca; color: #b91c1c; padding: 1.5rem; border-radius: 1.5rem; margin-top: 2rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 1.1rem;">
+                <i class="fas fa-user-shield"></i>
+                <strong>Security Penalty Applied</strong>
+            </div>
+            <div style="font-size: 0.9rem; opacity: 0.9; text-align: center;">
+                Detected <strong>{{ attempt.tab_switch_count }}</strong> tab switch activity.
+                <br>
+                {% if attempt.is_disqualified %}
+                    <span style="font-weight: 800; color: #ef4444;">Status: DISQUALIFIED (3+ switches)</span>
+                {% elif attempt.tab_switch_count == 1 %}
+                    <span style="font-weight: 700;">Penalty: -2 Marks (1st switch)</span>
+                {% elif attempt.tab_switch_count == 2 %}
+                    <span style="font-weight: 700;">Penalty: -5 Marks (2nd switch)</span>
+                {% endif %}
+            </div>
         </div>
         {% endif %}
     </div>

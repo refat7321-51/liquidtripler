@@ -95,8 +95,14 @@
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
             <h3 style="margin:0;font-size:1rem;font-weight:800;color:#9a3412;">Security Logs / Warnings</h3>
+            <div style="margin-left: 1rem; padding: 0.25rem 0.75rem; background: #fee2e2; border-radius: 0.5rem; border: 1px solid #fecaca; color: #b91c1c; font-size: 0.8rem; font-weight: 800;">
+                {% if attempt.is_disqualified %}Disqualified (3+ Switches)
+                {% elif attempt.tab_switch_count == 2 %}-5 Marks Penalty
+                {% elif attempt.tab_switch_count == 1 %}-2 Marks Penalty
+                {% else %}No Penalty Applied{% endif %}
+            </div>
             <span style="margin-left:auto;background:#ffedd5;color:#c2410c;font-size:0.7rem;font-weight:800;padding:2px 8px;border-radius:99px;border:1px solid #fed7aa;">
-                {{ warnings.count }} Events
+                {{ warnings.count }} Events ({{ attempt.tab_switch_count }} Unique)
             </span>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:0.75rem;">
