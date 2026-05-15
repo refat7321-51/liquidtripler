@@ -1074,27 +1074,33 @@ def fix_all_penalties(request):
     details = []
 
     for attempt in attempts:
-        # Get actual warning count from logs for reliability
-        warning_count = WarningLog.objects.filter(attempt=attempt).count()
-        attempt.tab_switch_count = warning_count
+        # Get all logs for this attempt ordered by timestamp
+        logs = WarningLog.objects.filter(attempt=attempt).order_by('timestamp')
         
-        # Start with a fresh base score calculation
-        correct_count = sum(1 for a in attempt.answers.all() if a.selected_option.is_correct)
+        unique_events = 0
+        last_timestamp = None
+        
+        # Deduplicate: Only count as a new event if > 5 seconds from the last one
+        for log in logs:
+            if last_timestamp is None or (log.timestamp - last_timestamp).total_seconds() > 5:
+                unique_events += 1
+                last_timestamp = log.timestamp
+        
+        attempt.tab_switch_count = unique_events
+        
+        # Recalculate base score from answers
+        correct_count = sum(1 for a in attempt.answers.all() if a.selected_option and a.selected_option.is_correct)
         attempt.score = correct_count
         
-        has_changed = False
         status = "Normal"
-
-        if warning_count >= 2:
+        if unique_events >= 2:
             attempt.score = 0
             attempt.is_disqualified = True
-            status = "Disqualified (0 Marks)"
-            has_changed = True
-        elif warning_count == 1:
+            status = f"Disqualified ({unique_events} events)"
+        elif unique_events == 1:
             attempt.score = max(0, attempt.score - 2)
             attempt.is_disqualified = False
-            status = "Penalty Applied (-2 Marks)"
-            has_changed = True
+            status = "Penalty Applied (-2)"
         else:
             attempt.is_disqualified = False
             status = "No Penalty"
@@ -1104,14 +1110,15 @@ def fix_all_penalties(request):
         details.append({
             'student': attempt.student_name,
             'quiz': attempt.quiz.title,
-            'warnings': warning_count,
+            'unique_warnings': unique_events,
+            'total_logs_found': logs.count(),
             'final_score': attempt.score,
             'status': status
         })
 
     return JsonResponse({
         'success': True, 
-        'message': f'Successfully processed {updated_count} attempts across all quizzes.',
+        'message': f'Processed {updated_count} attempts with deduplication logic.',
         'details': details
     })
 
