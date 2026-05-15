@@ -266,13 +266,17 @@ class StudentAttempt(models.Model):
         return f"{self.student_name} - {self.quiz.title}"
 
     def calculate_score(self):
-        correct_count = sum(1 for a in self.answers.all() if a.selected_option.is_correct)
+        if self.is_disqualified:
+            self.score = 0
+        else:
+            correct_count = sum(1 for a in self.answers.all() if a.selected_option.is_correct)
+            self.score = correct_count
+            
         self.total_questions = self.quiz.questions.count()
-        self.score = correct_count
         self.is_submitted = True
         self.submitted_at = timezone.now()
         self.save()
-        return correct_count
+        return self.score
 
 
 class StudentAnswer(models.Model):

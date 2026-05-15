@@ -997,8 +997,12 @@ def submit_quiz(request):
                 return JsonResponse({'success': False, 'error': 'Quiz time has expired. Submission not allowed.'}, status=403)
         attempt.calculate_score()
         # Tab switch penalty: 1st switch = 2 marks minus
-        if attempt.tab_switch_count >= 1:
+        # (Only apply if NOT disqualified, because disqualified already gets 0)
+        if not attempt.is_disqualified and attempt.tab_switch_count == 1:
             attempt.score = max(0, attempt.score - 2)
+            attempt.save()
+        elif attempt.is_disqualified:
+            attempt.score = 0
             attempt.save()
         
         # Log activity
@@ -1028,18 +1032,19 @@ def log_warning(request):
 
         response_data = {'success': True, 'action': 'none'}
 
-        if warning_type == 'tab_switch':
+        if warning_type in ['tab_switch', 'window_blur']:
             attempt.tab_switch_count += 1
             attempt.save()
 
             if attempt.tab_switch_count == 1:
                 response_data['action'] = 'warning'
-                response_data['message'] = '⚠️ সতর্কতা! Tab switch করায় 2 marks কাটা যাবে। আরেকবার করলে quiz বাতিল!'
+                response_data['message'] = '⚠️ সতর্কতা! Tab switch বা অন্য উইন্ডোতে যাওয়ায় ২ মার্ক কাটা যাবে। আরেকবার করলে কুইজ বাতিল!'
             elif attempt.tab_switch_count >= 2:
                 attempt.is_disqualified = True
+                attempt.score = 0
                 attempt.save()
                 response_data['action'] = 'disqualified'
-                response_data['message'] = '🚫 Quiz বাতিল! দুইবার Tab switch করেছো।'
+                response_data['message'] = '🚫 কুইজ বাতিল! একাধিকবার ট্যাব বা উইন্ডো পরিবর্তন করেছো।'
 
         return JsonResponse(response_data)
     except Exception as e:
