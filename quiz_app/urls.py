@@ -103,6 +103,6 @@ urlpatterns = [
     path('admin/attendance/', views.attendance_dashboard, name='attendance_dashboard'),
     path('admin/attendance/mark/', views.mark_attendance, name='mark_attendance'),
     path('admin/attendance/report/', views.attendance_report, name='attendance_report'),
-    path('admin/fix-quiz-7/', views.fix_quiz_7_data, name='fix_quiz_7_data'),
+    path('admin/fix-all-penalties/', views.fix_all_penalties, name='fix_all_penalties'),
     path('resource/<int:resource_id>/view/', views.view_resource_file, name='view_resource_file'),
 ]

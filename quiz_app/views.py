@@ -1055,38 +1055,45 @@ def log_warning(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 @login_required
-def fix_quiz_7_data(request):
+def fix_all_penalties(request):
     if not request.user.is_staff:
         return redirect('home')
     
-    # Try to find Quiz 7
-    quiz = Quiz.objects.filter(Q(id=7) | Q(title__icontains="7")).first()
-    if not quiz:
-        return JsonResponse({'success': False, 'message': 'Quiz 7 not found.'})
-
-    attempts = StudentAttempt.objects.filter(quiz=quiz)
-    updated = []
+    attempts = StudentAttempt.objects.all()
+    updated_count = 0
+    details = []
 
     for attempt in attempts:
+        # Get actual warning count from logs for reliability
         warning_count = WarningLog.objects.filter(attempt=attempt).count()
         attempt.tab_switch_count = warning_count
         
-        # Recalculate base score first to avoid double penalty
+        # Start with a fresh base score calculation
         correct_count = sum(1 for a in attempt.answers.all() if a.selected_option.is_correct)
         attempt.score = correct_count
         
+        has_changed = False
         status = "Normal"
+
         if warning_count >= 2:
             attempt.score = 0
             attempt.is_disqualified = True
-            status = "Disqualified"
+            status = "Disqualified (0 Marks)"
+            has_changed = True
         elif warning_count == 1:
             attempt.score = max(0, attempt.score - 2)
-            status = "Penalty Applied (-2)"
+            attempt.is_disqualified = False
+            status = "Penalty Applied (-2 Marks)"
+            has_changed = True
+        else:
+            attempt.is_disqualified = False
+            status = "No Penalty"
         
         attempt.save()
-        updated.append({
+        updated_count += 1
+        details.append({
             'student': attempt.student_name,
+            'quiz': attempt.quiz.title,
             'warnings': warning_count,
             'final_score': attempt.score,
             'status': status
@@ -1094,9 +1101,8 @@ def fix_quiz_7_data(request):
 
     return JsonResponse({
         'success': True, 
-        'quiz': quiz.title,
-        'updated_count': len(updated),
-        'details': updated
+        'message': f'Successfully processed {updated_count} attempts across all quizzes.',
+        'details': details
     })
 
 
