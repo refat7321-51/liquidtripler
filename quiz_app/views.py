@@ -1843,6 +1843,20 @@ def admin_student_progress(request, user_id):
     # Tab Switches (Total from all warnings)
     total_tab_switches = WarningLog.objects.filter(attempt__student=target_user).count()
 
+    # Stats for Academic Overview — use centralized helper
+    target_sc = calculate_student_score(target_user)
+    student_q_earned = target_sc['quiz_score']
+    student_a_earned = target_sc['ass_score']
+
+    all_quizzes = Quiz.objects.filter(is_published=True)
+    total_q_possible = sum(q.questions.count() for q in all_quizzes)
+    all_assignments = Assignment.objects.all()
+    total_a_possible = sum(a.total_marks for a in all_assignments)
+
+    attendance_p = min(round((profile.attendance_count / 30) * 100), 100)
+    quiz_p = round((student_q_earned / total_q_possible * 100)) if total_q_possible > 0 else 0
+    assignment_p = round((student_a_earned / total_a_possible * 100)) if total_a_possible > 0 else 0
+
     context = {
         'target_user': target_user,
         'profile': profile,
@@ -1852,6 +1866,13 @@ def admin_student_progress(request, user_id):
         'rank': my_rank,
         'total_marks': student_total_score,
         'total_tab_switches': total_tab_switches,
+        'quiz_p': quiz_p,
+        'student_q_earned': student_q_earned,
+        'total_q_possible': total_q_possible,
+        'attendance_p': attendance_p,
+        'assignment_p': assignment_p,
+        'student_a_earned': student_a_earned,
+        'total_a_possible': total_a_possible,
     }
     return render(request, 'admin_student_progress.html', context)
 
