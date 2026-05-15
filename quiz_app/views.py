@@ -1894,7 +1894,7 @@ def admin_student_progress(request, user_id):
         'attempts': attempts,
         'submissions': submissions,
         'recent_activities': recent_activities,
-        'rank': my_rank,
+        'my_rank': my_rank,
         'total_marks': student_total_score,
         'total_tab_switches': total_tab_switches,
         'quiz_p': quiz_p,
