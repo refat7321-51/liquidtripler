@@ -1844,7 +1844,7 @@ def admin_student_progress(request, user_id):
     total_tab_switches = WarningLog.objects.filter(attempt__student=target_user).count()
 
     context = {
-        'student_user': target_user,
+        'target_user': target_user,
         'profile': profile,
         'attempts': attempts,
         'submissions': submissions,
