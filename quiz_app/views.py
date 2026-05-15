@@ -505,6 +505,9 @@ def student_profile(request):
         student=request.user
     ).select_related('assignment').order_by('-submitted_at')
 
+    # Calculate total tab switches/warnings across all quizzes
+    total_tab_switches = WarningLog.objects.filter(attempt__student=request.user).count()
+
     context = {
         'student': request.user,
         'profile': profile,
@@ -517,6 +520,7 @@ def student_profile(request):
         'attendance_score': attendance_score,
         'quiz_score': quiz_score,
         'assignment_score': assignment_score,
+        'total_tab_switches': total_tab_switches,
     }
     return render(request, 'student_profile.html', context)
 
@@ -1307,8 +1311,8 @@ def student_dashboard(request):
     recent_activities = ActivityLog.objects.filter(user=request.user).order_by('-timestamp')[:50] 
     latest_notices = Notice.objects.all().order_by('-created_at')[:20] # Get more for see more toggle
 
-    # Calculate total tab switches across all quizzes
-    total_tab_switches = sum(a.tab_switch_count for a in StudentAttempt.objects.filter(student=request.user))
+    # Calculate total tab switches across all quizzes (from WarningLog for accuracy)
+    total_tab_switches = WarningLog.objects.filter(attempt__student=request.user).count()
 
     context = {
         'profile': profile,
