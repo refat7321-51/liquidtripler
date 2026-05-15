@@ -1027,9 +1027,19 @@ def log_warning(request):
         attempt = StudentAttempt.objects.get(id=data.get('attempt_id'))
         warning_type = data.get('warning_type')
 
+        # Anti-Duplicate / Debounce: Check if a log was created in the last 2 seconds
+        recent_log = WarningLog.objects.filter(
+            attempt=attempt, 
+            timestamp__gte=timezone.now() - timezone.timedelta(seconds=2)
+        ).exists()
+
+        if recent_log:
+            return JsonResponse({'success': True, 'action': 'none'})
+
+        # Force all cheat events to be 'tab_switch' for clarity
         WarningLog.objects.create(
             attempt=attempt,
-            warning_type=warning_type,
+            warning_type='tab_switch',
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request)
         )

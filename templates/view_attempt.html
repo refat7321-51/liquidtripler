@@ -103,11 +103,7 @@
             {% for warning in warnings %}
             <div style="background:white;border:1px solid #fed7aa;border-radius:0.8rem;padding:0.6rem 0.9rem;display:flex;align-items:center;gap:10px;">
                 <span style="font-size:0.8rem;">
-                    {% if warning.warning_type == 'tab_switch' %}🔄 Tab Switch
-                    {% elif warning.warning_type == 'page_refresh' %}🔃 Refresh
-                    {% elif warning.warning_type == 'page_exit' %}❌ Exit
-                    {% elif warning.warning_type == 'focus_lost' %}👁️ Focus Lost
-                    {% else %}⚠️ Warning{% endif %}
+                    🔄 Tab Switch
                 </span>
                 <div style="width:1px;height:12px;background:#fed7aa;"></div>
                 <span style="font-size:0.75rem;font-weight:700;color:#ea580c;">{{ warning.timestamp|date:"d/m/Y h:i:s A" }}</span>
