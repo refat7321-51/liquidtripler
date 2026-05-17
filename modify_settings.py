@@ -27,7 +27,7 @@ db_config = """
 DATABASES = {
     'default': dj_database_url.config(
         default='postgresql://neondb_owner:npg_cAtom0jXEY8y@ep-curly-tree-ao9i5ghm.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require',
-        conn_max_age=600
+        conn_max_age=0
     )
 }
 """
