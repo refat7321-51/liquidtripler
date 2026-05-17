@@ -62,6 +62,66 @@ def calculate_student_score(student):
     }
 
 
+def get_all_student_scores():
+    """
+    Computes all student scores and rankings in bulk to avoid N+1 query problem.
+    Returns a dict mapping student_id to score breakdown.
+    """
+    from collections import defaultdict
+    from django.db.models import Max
+    
+    # 1. Fetch all students
+    students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
+    
+    # 2. Fetch all submitted attempts
+    attempts = StudentAttempt.objects.filter(is_submitted=True).only('student_id', 'quiz_id', 'score')
+    attempts_by_student = defaultdict(list)
+    for a in attempts:
+        if a.student_id:
+            attempts_by_student[a.student_id].append(a)
+            
+    # 3. Fetch all graded and published assignment submissions
+    submissions = AssignmentSubmission.objects.filter(is_graded=True, is_published=True).only('student_id', 'assignment_id', 'marks')
+    submissions_by_student = defaultdict(list)
+    for sub in submissions:
+        if sub.student_id:
+            submissions_by_student[sub.student_id].append(sub)
+            
+    # 4. Compute scores for all students
+    results = {}
+    for s in students:
+        profile = s.student_profile
+        
+        # Calculate quiz base (best score per quiz) in memory
+        student_attempts = attempts_by_student[s.id]
+        best_quiz_scores = {}
+        for a in student_attempts:
+            best_quiz_scores[a.quiz_id] = max(best_quiz_scores.get(a.quiz_id, 0), a.score)
+        quiz_base = sum(best_quiz_scores.values())
+        quiz_score = quiz_base + profile.quiz_bonus_marks
+        
+        # Calculate attendance score
+        att_score = (profile.attendance_count * 5) + profile.attendance_bonus_marks
+        
+        # Calculate assignment base
+        student_submissions = submissions_by_student[s.id]
+        ass_base = sum(sub.marks for sub in student_submissions)
+        ass_score = ass_base + profile.assignment_bonus_marks
+        
+        # Total
+        total = quiz_score + att_score + ass_score + profile.bonus_marks
+        
+        results[s.id] = {
+            'total': total,
+            'quiz_score': quiz_score,
+            'att_score': att_score,
+            'ass_score': ass_score,
+            'bonus': profile.bonus_marks,
+            'quiz_count': len(student_attempts),
+        }
+    return results
+
+
 def log_activity(user, action, description=""):
     """Helper function to log user activities."""
     if user.is_authenticated:
@@ -484,18 +544,13 @@ def student_profile(request):
             attempt.percentage = 0
 
     # --- Unified Ranking System (Matches Leaderboard) ---
-    all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
-
-    temp = []
-    for s in all_students:
-        sc = calculate_student_score(s)
-        temp.append({'student_id': s.id, 'total_score': sc['total']})
-
+    all_scores = get_all_student_scores()
+    temp = [{'student_id': sid, 'total_score': info['total']} for sid, info in all_scores.items()]
     temp.sort(key=lambda x: -x['total_score'])
     my_rank = next((i for i, x in enumerate(temp, 1) if x['student_id'] == request.user.id), None)
 
     # --- Unified Raw Mark Scoring System (uses centralized helper) ---
-    my_sc = calculate_student_score(request.user)
+    my_sc = all_scores.get(request.user.id, {'quiz_score': 0, 'att_score': 0, 'ass_score': 0, 'total': 0})
     quiz_score = my_sc['quiz_score']
     attendance_score = my_sc['att_score']
     assignment_score = my_sc['ass_score']
@@ -1202,12 +1257,18 @@ def leaderboard(request):
         # Fetch all registered students
         students = User.objects.filter(student_profile__isnull=False, is_staff=False, is_superuser=False).select_related('student_profile')
         
+        # Fetch all submitted attempts for this quiz in bulk to avoid N+1 query problem
+        attempts = StudentAttempt.objects.filter(quiz=selected_quiz, is_submitted=True)
+        best_attempts_by_student = {}
+        for a in attempts:
+            if a.student_id:
+                current_best = best_attempts_by_student.get(a.student_id)
+                if not current_best or a.score > current_best.score or (a.score == current_best.score and a.submitted_at < current_best.submitted_at):
+                    best_attempts_by_student[a.student_id] = a
+
         temp_data = []
         for student in students:
-            # Find the best attempt for this specific quiz
-            best_attempt = StudentAttempt.objects.filter(
-                quiz=selected_quiz, student=student, is_submitted=True
-            ).order_by('-score', 'submitted_at').first()
+            best_attempt = best_attempts_by_student.get(student.id)
             
             score = best_attempt.score if best_attempt else 0
             percentage = (score / best_attempt.total_questions * 100) if (best_attempt and best_attempt.total_questions > 0) else 0
@@ -1230,13 +1291,12 @@ def leaderboard(request):
     else:
         # All students combined — even those with no activity yet
         # Uses the unified scoring system: (Attendance*5) + Best Quiz Marks + Assignment Marks
-        from django.db.models import Sum, Count, Max
         students = User.objects.filter(student_profile__isnull=False, is_staff=False, is_superuser=False).select_related('student_profile')
+        all_scores = get_all_student_scores()
 
         temp = []
         for student in students:
-            student_attempts = StudentAttempt.objects.filter(student=student, is_submitted=True)
-            sc = calculate_student_score(student)
+            sc = all_scores.get(student.id, {'quiz_score': 0, 'att_score': 0, 'ass_score': 0, 'total': 0, 'quiz_count': 0})
             profile = student.student_profile
             temp.append({
                 'student': student,
@@ -1245,7 +1305,7 @@ def leaderboard(request):
                 'quiz_score': sc['quiz_score'],
                 'attendance_score': sc['att_score'],
                 'assignment_score': sc['ass_score'],
-                'quiz_count': student_attempts.count(),
+                'quiz_count': sc['quiz_count'],
             })
 
         temp.sort(key=lambda x: -x['total_score'])
@@ -1353,13 +1413,8 @@ def student_dashboard(request):
         recent_score_data = {'score': recent_ass.marks, 'total': recent_ass.assignment.total_marks, 'type': 'Assignment', 'title': recent_ass.assignment.title}
     
     # --- Unified Ranking System (Matches Leaderboard) ---
-    all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
-    
-    rank_list = []
-    for s in all_students:
-        sc = calculate_student_score(s)
-        rank_list.append({'student_id': s.id, 'total_score': sc['total']})
-    
+    all_scores = get_all_student_scores()
+    rank_list = [{'student_id': sid, 'total_score': info['total']} for sid, info in all_scores.items()]
     rank_list.sort(key=lambda x: -x['total_score'])
     my_rank = next((i for i, x in enumerate(rank_list, 1) if x['student_id'] == request.user.id), None)
     
@@ -1367,7 +1422,7 @@ def student_dashboard(request):
     # Formula: Total = (Attendance * 5) + Quiz Marks + Assignment Marks
     
     # --- Use centralized scoring helper ---
-    my_scores = calculate_student_score(request.user)
+    my_scores = all_scores.get(request.user.id, {'quiz_score': 0, 'ass_score': 0, 'att_score': 0, 'total': 0})
     student_q_earned = my_scores['quiz_score']
     student_a_earned = my_scores['ass_score']
     attendance_earned = my_scores['att_score']
@@ -1850,16 +1905,10 @@ def admin_student_progress(request, user_id):
     profile, _ = StudentProfile.objects.get_or_create(user=target_user)
     
     # --- Unified Ranking System (Matches Leaderboard) ---
-    all_students = User.objects.filter(student_profile__isnull=False).exclude(is_staff=True).select_related('student_profile')
-    
-    rank_list = []
-    for s in all_students:
-        sc = calculate_student_score(s)
-        rank_list.append({'student_id': s.id, 'total_score': sc['total']})
-    
+    all_scores = get_all_student_scores()
+    rank_list = [{'student_id': sid, 'total_score': info['total']} for sid, info in all_scores.items()]
     rank_list.sort(key=lambda x: -x['total_score'])
     my_rank = next((i for i, x in enumerate(rank_list, 1) if x['student_id'] == target_user.id), None)
-    
 
     # Detailed Data
     attempts = StudentAttempt.objects.filter(student=target_user, is_submitted=True).order_by('-submitted_at')
@@ -1875,7 +1924,7 @@ def admin_student_progress(request, user_id):
     total_tab_switches = WarningLog.objects.filter(attempt__student=target_user).count()
 
     # Stats for Academic Overview — use centralized helper
-    target_sc = calculate_student_score(target_user)
+    target_sc = all_scores.get(target_user.id, {'quiz_score': 0, 'ass_score': 0, 'att_score': 0, 'total': 0})
     student_q_earned = target_sc['quiz_score']
     student_a_earned = target_sc['ass_score']
 
@@ -1904,39 +1953,6 @@ def admin_student_progress(request, user_id):
         'assignment_p': assignment_p,
         'student_a_earned': student_a_earned,
         'total_a_possible': total_a_possible,
-    }
-    return render(request, 'admin_student_progress.html', context)
-
-    # Stats for Academic Overview — use centralized helper
-    target_sc = calculate_student_score(target_user)
-    student_q_earned = target_sc['quiz_score']
-    student_a_earned = target_sc['ass_score']
-
-    all_quizzes = Quiz.objects.filter(is_published=True)
-    total_q_possible = sum(q.questions.count() for q in all_quizzes)
-    all_assignments = Assignment.objects.all()
-    total_a_possible = sum(a.total_marks for a in all_assignments)
-
-    quiz_p = round((student_q_earned / total_q_possible * 100)) if total_q_possible > 0 else 0
-    assignment_p = round((student_a_earned / total_a_possible * 100)) if total_a_possible > 0 else 0
-    attendance_p = min(round((profile.attendance_count / 30) * 100), 100)
-
-    context = {
-        'target_user': target_user,
-        'profile': profile,
-        'my_rank': my_rank,
-        'attempts': attempts,
-        'submissions': submissions,
-        'total_marks': target_sc['total'],
-        'recent_activities': recent_activities,
-        'total_tab_switches': total_tab_switches,
-        'student_q_earned': student_q_earned,
-        'total_q_possible': total_q_possible,
-        'quiz_p': quiz_p,
-        'student_a_earned': student_a_earned,
-        'total_a_possible': total_a_possible,
-        'assignment_p': assignment_p,
-        'attendance_p': attendance_p,
     }
     return render(request, 'admin_student_progress.html', context)
 
