@@ -743,7 +743,7 @@
                     </td>
                     <td><span class="ad-pill" style="background:#f0f3ff; color:#4f46e5; padding:3px 10px; border-radius:99px; font-weight:700;">{{ quiz.questions.count }} Qs</span></td>
                     <td style="color: #475569; font-weight: 500;">⏱ {{ quiz.time_limit }} min</td>
-                    <td style="color: #1e293b; font-weight: 700;">{{ quiz.attempts.count }} attempts</td>
+                    <td style="color: #1e293b; font-weight: 700;">{{ quiz.attempts.count }}</td>
                     <td style="color: #94a3b8; font-size: 0.85rem;">{{ quiz.created_at|date:"d/m/Y" }}</td>
                     <td>
                         {% if quiz.is_published %}
