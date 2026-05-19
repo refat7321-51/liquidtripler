@@ -1053,7 +1053,7 @@
                     <td>
                         <div class="ad-adj">
                             <button onclick="adjustScore({{ attempt.id }}, 'minus')" class="ad-adj-btn ad-adj-m">−</button>
-                            <input type="number" id="amt-d-{{ attempt.id }}" value="1" min="1" max="{{ attempt.total_questions }}" class="ad-adj-inp ad-amt-{{ attempt.id }}">
+                            <input type="number" id="amt-d-{{ attempt.id }}" value="1" min="0" max="{{ attempt.total_questions }}" class="ad-adj-inp ad-amt-{{ attempt.id }}">
                             <button onclick="adjustScore({{ attempt.id }}, 'add')" class="ad-adj-btn ad-adj-p">＋</button>
                             <button onclick="setScore({{ attempt.id }})" class="ad-adj-set">Set</button>
                         </div>
@@ -1089,7 +1089,7 @@
                 <div class="ad-adj" style="justify-content:center; width:100%; gap:10px;">
                     <div style="display:flex; align-items:center; gap:5px;">
                         <button onclick="adjustScore({{ attempt.id }}, 'minus')" class="ad-adj-btn ad-adj-m">−</button>
-                        <input type="number" id="amt-m-{{ attempt.id }}" value="1" min="1" max="{{ attempt.total_questions }}" class="ad-adj-inp ad-amt-{{ attempt.id }}">
+                        <input type="number" id="amt-m-{{ attempt.id }}" value="1" min="0" max="{{ attempt.total_questions }}" class="ad-adj-inp ad-amt-{{ attempt.id }}">
                         <button onclick="adjustScore({{ attempt.id }}, 'add')" class="ad-adj-btn ad-adj-p">＋</button>
                     </div>
                     <button onclick="setScore({{ attempt.id }})" class="ad-adj-set" style="flex:1;">Set Marks</button>
@@ -1799,9 +1799,14 @@
         const mobileInput = document.getElementById('amt-m-' + id);
         const desktopInput = document.getElementById('amt-d-' + id);
         if (mobileInput && window.getComputedStyle(mobileInput.closest('.ad-m-card') || mobileInput).display !== 'none') {
-            return parseInt(mobileInput.value) || 1;
+            const val = parseInt(mobileInput.value);
+            return isNaN(val) ? 1 : val;
         }
-        return desktopInput ? (parseInt(desktopInput.value) || 1) : 1; 
+        if (desktopInput) {
+            const val = parseInt(desktopInput.value);
+            return isNaN(val) ? 1 : val;
+        }
+        return 1; 
     }
 
     function adjustScore(id, action) {
