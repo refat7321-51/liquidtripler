@@ -11,9 +11,25 @@
             <h1 style="color: #1e293b; font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -0.025em;">Student Submissions</h1>
             <p style="color: #64748b; margin-top: 0.25rem;">Review and grade assignments submitted by students.</p>
         </div>
-        <a href="{% url 'assignment_list' %}" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: white; border: 1.5px solid #e2e8f0; border-radius: 12px; color: #475569; text-decoration: none; font-weight: 700; transition: all 0.2s;">
-            <i class="fas fa-arrow-left"></i> Back to Assignments
-        </a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            {% if has_graded_unpublished %}
+            <a href="{% url 'publish_all_submissions' %}{% if assignment_id %}?assignment={{ assignment_id }}{% endif %}" 
+               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #10b981; border-radius: 12px; color: white; text-decoration: none; font-weight: 700; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);"
+               onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                <i class="fas fa-paper-plane"></i> Publish All
+            </a>
+            {% elif has_published %}
+            <a href="{% url 'unpublish_all_submissions' %}{% if assignment_id %}?assignment={{ assignment_id }}{% endif %}" 
+               style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: #ef4444; border-radius: 12px; color: white; text-decoration: none; font-weight: 700; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);"
+               onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+                <i class="fas fa-eye-slash"></i> Unpublish All
+            </a>
+            {% endif %}
+
+            <a href="{% url 'assignment_list' %}" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: white; border: 1.5px solid #e2e8f0; border-radius: 12px; color: #475569; text-decoration: none; font-weight: 700; transition: all 0.2s;">
+                <i class="fas fa-arrow-left"></i> Back to Assignments
+            </a>
+        </div>
     </div>
 
     <!-- Table Container -->

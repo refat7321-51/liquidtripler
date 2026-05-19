@@ -59,6 +59,8 @@ urlpatterns = [
     path('admin/submissions/', views.admin_submissions, name='admin_submissions'),
     path('submission/<int:submission_id>/grade/', views.grade_submission, name='grade_submission'),
     path('submission/<int:submission_id>/publish/', views.publish_assignment_result, name='publish_result'),
+    path('admin/submissions/publish-all/', views.publish_all_submissions, name='publish_all_submissions'),
+    path('admin/submissions/unpublish-all/', views.unpublish_all_submissions, name='unpublish_all_submissions'),
 
     # ── Notices ───────────────────────────────────────────────
     path('notices/', views.notice_list, name='notice_list'),

@@ -1818,10 +1818,19 @@ def admin_submissions(request):
     assignment_id = request.GET.get('assignment')
     if assignment_id:
         submissions = AssignmentSubmission.objects.filter(assignment_id=assignment_id).select_related('student', 'assignment').order_by('-submitted_at')
+        has_graded_unpublished = AssignmentSubmission.objects.filter(assignment_id=assignment_id, is_graded=True, is_published=False).exists()
+        has_published = AssignmentSubmission.objects.filter(assignment_id=assignment_id, is_published=True).exists()
     else:
         submissions = AssignmentSubmission.objects.all().select_related('student', 'assignment').order_by('-submitted_at')
+        has_graded_unpublished = AssignmentSubmission.objects.filter(is_graded=True, is_published=False).exists()
+        has_published = AssignmentSubmission.objects.filter(is_published=True).exists()
         
-    return render(request, 'admin_submissions.html', {'submissions': submissions})
+    return render(request, 'admin_submissions.html', {
+        'submissions': submissions,
+        'assignment_id': assignment_id,
+        'has_graded_unpublished': has_graded_unpublished,
+        'has_published': has_published
+    })
 
 
 @login_required(login_url='admin_login')
@@ -1862,6 +1871,77 @@ def publish_assignment_result(request, submission_id):
     )
     messages.success(request, f"Result published for {submission.student.get_full_name()}!")
     return redirect(f"{reverse('admin_submissions')}?assignment={submission.assignment.id}")
+
+
+@login_required(login_url='admin_login')
+def publish_all_submissions(request):
+    if not request.user.is_staff:
+        return redirect('home')
+    
+    assignment_id = request.GET.get('assignment')
+    if assignment_id:
+        submissions = AssignmentSubmission.objects.filter(assignment_id=assignment_id, is_graded=True, is_published=False)
+    else:
+        submissions = AssignmentSubmission.objects.filter(is_graded=True, is_published=False)
+        
+    count = 0
+    for submission in submissions:
+        submission.is_published = True
+        submission.save()
+        
+        # Create notice for the student
+        Notice.objects.get_or_create(
+            title=f"📊 Result Published: {submission.assignment.title}",
+            recipient=submission.student,
+            defaults={
+                'content': f"Your result for assignment '{submission.assignment.title}' has been published. Marks obtained: {submission.marks}/{submission.assignment.total_marks}. Check your profile for details."
+            }
+        )
+        count += 1
+        
+    if count > 0:
+        messages.success(request, f"Successfully published results for {count} student(s)!")
+    else:
+        messages.info(request, "No new graded results to publish.")
+        
+    redirect_url = reverse('admin_submissions')
+    if assignment_id:
+        redirect_url += f"?assignment={assignment_id}"
+    return redirect(redirect_url)
+
+
+@login_required(login_url='admin_login')
+def unpublish_all_submissions(request):
+    if not request.user.is_staff:
+        return redirect('home')
+        
+    assignment_id = request.GET.get('assignment')
+    if assignment_id:
+        submissions = AssignmentSubmission.objects.filter(assignment_id=assignment_id, is_published=True)
+    else:
+        submissions = AssignmentSubmission.objects.filter(is_published=True)
+        
+    count = 0
+    for submission in submissions:
+        submission.is_published = False
+        submission.save()
+        
+        # Delete notice for the student
+        Notice.objects.filter(
+            recipient=submission.student,
+            title=f"📊 Result Published: {submission.assignment.title}"
+        ).delete()
+        count += 1
+        
+    if count > 0:
+        messages.success(request, f"Successfully unpublished results for {count} student(s)!")
+    else:
+        messages.info(request, "No published results found to unpublish.")
+        
+    redirect_url = reverse('admin_submissions')
+    if assignment_id:
+        redirect_url += f"?assignment={assignment_id}"
+    return redirect(redirect_url)
 
 
 @login_required(login_url='admin_login')
