@@ -1874,6 +1874,33 @@ def publish_assignment_result(request, submission_id):
 
 
 @login_required(login_url='admin_login')
+def cancel_grade(request, submission_id):
+    if not request.user.is_staff:
+        return redirect('home')
+    submission = get_object_or_404(AssignmentSubmission, id=submission_id)
+    
+    submission.is_graded = False
+    submission.is_published = False
+    submission.marks = 0
+    submission.feedback = ""
+    submission.save()
+    
+    # Delete notice if any existed for this result
+    Notice.objects.filter(
+        recipient=submission.student,
+        title=f"📊 Result Published: {submission.assignment.title}"
+    ).delete()
+    
+    messages.success(request, f"Grading reset to pending for {submission.student.get_full_name()}!")
+    
+    redirect_url = reverse('admin_submissions')
+    assignment_id = request.GET.get('assignment')
+    if assignment_id:
+        redirect_url += f"?assignment={assignment_id}"
+    return redirect(redirect_url)
+
+
+@login_required(login_url='admin_login')
 def publish_all_submissions(request):
     if not request.user.is_staff:
         return redirect('home')
