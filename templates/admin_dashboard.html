@@ -474,6 +474,7 @@
 {% endblock %}
 
 {% block content %}
+<div style="display: none;">{% csrf_token %}</div>
 
 <!-- ── Welcome Hero ── -->
 <div class="ad-hero-section" style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%); padding:2.2rem 2.5rem; border-radius:1.5rem; color:white; margin-bottom:2rem; position:relative; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.12);">
@@ -485,6 +486,9 @@
                 <span style="width:7px;height:7px;background:#4ade80;border-radius:50%;display:inline-block;animation:ad-ping 1.5s infinite;"></span>
                 <span style="font-size:0.8rem;font-weight:700;">Live</span>
             </div>
+            <button onclick="triggerCleanup()" style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,0.2);color:#fca5a5;padding:6px 14px;border-radius:99px;border:1px solid rgba(239,68,68,0.3);backdrop-filter:blur(8px);font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(239,68,68,0.2)'">
+                🧹 Clean Duplicates
+            </button>
         </div>
     </div>
     <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:rgba(59,130,246,0.15);border-radius:50%;pointer-events:none;"></div>
@@ -1013,18 +1017,39 @@ document.querySelectorAll('.ad-prog-fill[data-score]').forEach(function(el) {
 });
 
 /* ── Score helpers ─────── */
+function getCsrfToken() {
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : getCookie('csrftoken');
+}
+
 function getAmount(id) { 
-    // Try to get value from whichever input is visible/active
-    const el = document.querySelector('.ad-amt-' + id);
-    return el ? (parseInt(el.value) || 1) : 1; 
+    const mobileInput = document.getElementById('amt-m-' + id);
+    const desktopInput = document.getElementById('amt-d-' + id);
+    
+    // Check if mobile input exists and its card is visible
+    if (mobileInput && window.getComputedStyle(mobileInput.closest('.ad-m-card') || mobileInput).display !== 'none') {
+        return parseInt(mobileInput.value) || 1;
+    }
+    return desktopInput ? (parseInt(desktopInput.value) || 1) : 1; 
 }
 
 function adjustScore(id, action) {
+    const amt = getAmount(id);
     fetch(`/attempt/${id}/adjust-score/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify({ action: action, amount: getAmount(id) })
-    }).then(r => r.json()).then(data => {
+        headers: { 
+            'Content-Type': 'application/json', 
+            'X-CSRFToken': getCsrfToken() 
+        },
+        body: JSON.stringify({ action: action, amount: amt })
+    })
+    .then(r => {
+        if (!r.ok) {
+            throw new Error('Server status ' + r.status);
+        }
+        return r.json();
+    })
+    .then(data => {
         if (data.success) {
             const sText = data.new_score + '/' + data.total;
             const pText = '(' + data.percentage + '%)';
@@ -1042,16 +1067,33 @@ function adjustScore(id, action) {
             if(mpEl) mpEl.textContent = pText;
 
             flashRow(id, action);
+        } else {
+            alert('Failed to adjust score: ' + (data.error || 'Unknown error'));
         }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error: Could not adjust score. Please verify your connection or login status.');
     });
 }
 
 function setScore(id) {
+    const amt = getAmount(id);
     fetch(`/attempt/${id}/adjust-score/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-        body: JSON.stringify({ action: 'set', amount: getAmount(id) })
-    }).then(r => r.json()).then(data => {
+        headers: { 
+            'Content-Type': 'application/json', 
+            'X-CSRFToken': getCsrfToken() 
+        },
+        body: JSON.stringify({ action: 'set', amount: amt })
+    })
+    .then(r => {
+        if (!r.ok) {
+            throw new Error('Server status ' + r.status);
+        }
+        return r.json();
+    })
+    .then(data => {
         if (data.success) {
             const sText = data.new_score + '/' + data.total;
             const pText = '(' + data.percentage + '%)';
@@ -1069,7 +1111,13 @@ function setScore(id) {
             if(mpEl) mpEl.textContent = pText;
 
             flashRow(id, 'set');
+        } else {
+            alert('Failed to set score: ' + (data.error || 'Unknown error'));
         }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error: Could not set score. Please verify your connection or login status.');
     });
 }
 
@@ -1113,6 +1161,38 @@ function initDashboard() {
 window.addEventListener('DOMContentLoaded', initDashboard);
 window.addEventListener('load', initDashboard);
 if (document.readyState === 'complete') initDashboard();
+
+function triggerCleanup() {
+    if (!confirm('Are you sure you want to clean up duplicate in-progress attempts? This will keep only the best attempt for each student.')) {
+        return;
+    }
+    
+    fetch('/admin/cleanup-duplicates/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(r => {
+        if (!r.ok) {
+            throw new Error('Server status ' + r.status);
+        }
+        return r.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert('Cleanup successful! Deleted ' + data.deleted_count + ' duplicate attempts.');
+            location.reload();
+        } else {
+            alert('Failed to clean up: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Error performing cleanup. Please verify connection or login status.');
+    });
+}
 
 // Removed auto-reload to prevent flickering/disappearing issues on mobile
 // setInterval(() => location.reload(), 30000);

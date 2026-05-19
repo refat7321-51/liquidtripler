@@ -26,6 +26,7 @@ urlpatterns = [
     path('admin/', views.admin_dashboard),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('admin-dashboard/', views.admin_dashboard),
+    path('admin/cleanup-duplicates/', views.admin_cleanup_duplicates, name='admin_cleanup_duplicates'),
     path('admin/profile/', views.admin_profile, name='admin_profile'),
     path('admin-profile/', views.admin_profile),
     path('admin/profile/remove-image/', views.remove_admin_profile_image, name='remove_admin_profile_image'),

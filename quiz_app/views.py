@@ -645,6 +645,48 @@ def admin_dashboard(request):
 
 
 @login_required(login_url='admin_login')
+@require_http_methods(["POST"])
+def admin_cleanup_duplicates(request):
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+        
+    student_names = StudentAttempt.objects.values_list('student_name', flat=True).distinct()
+    total_deleted = 0
+    details = []
+    
+    for s_name in student_names:
+        if not s_name:
+            continue
+        quizzes = StudentAttempt.objects.filter(student_name=s_name).values_list('quiz', flat=True).distinct()
+        for quiz_id in quizzes:
+            # Find all unsubmitted (In Progress) attempts for this student and quiz
+            attempts = list(StudentAttempt.objects.filter(
+                student_name=s_name, 
+                quiz_id=quiz_id, 
+                is_submitted=False
+            ).order_by('-started_at'))
+            
+            if len(attempts) > 1:
+                # Sort attempts by how many answers they have (most answers first), then by latest started_at
+                attempts.sort(key=lambda a: (a.answers.count(), a.started_at), reverse=True)
+                
+                # Keep the best one (index 0)
+                keep_attempt = attempts[0]
+                delete_attempts = attempts[1:]
+                
+                for da in delete_attempts:
+                    details.append(f"Deleted duplicate attempt ID {da.id} for {s_name} (Quiz ID: {quiz_id})")
+                    da.delete()
+                    total_deleted += 1
+                    
+    return JsonResponse({
+        'success': True,
+        'deleted_count': total_deleted,
+        'details': details
+    })
+
+
+@login_required(login_url='admin_login')
 def quiz_detail(request, quiz_id):
     if not request.user.is_staff:
         return redirect('admin_login')
@@ -979,13 +1021,33 @@ def start_quiz(request, quiz_id):
             messages.error(request, "This quiz has expired and can no longer be taken.")
             return redirect('quiz_list')
 
+        # Check for existing in-progress attempt on GET
+        existing_attempt = StudentAttempt.objects.filter(
+            student=request.user, quiz=quiz, is_submitted=False
+        ).first()
+        if existing_attempt:
+            request.session['attempt_id'] = existing_attempt.id
+            request.session['session_id'] = existing_attempt.session_id
+            return redirect('take_quiz', quiz_id=quiz.id)
+
     if request.method == 'POST':
+        # Double check inside POST block to prevent race conditions
+        if not request.user.is_staff:
+            existing_attempt = StudentAttempt.objects.filter(
+                student=request.user, quiz=quiz, is_submitted=False
+            ).first()
+            if existing_attempt:
+                request.session['attempt_id'] = existing_attempt.id
+                request.session['session_id'] = existing_attempt.session_id
+                return redirect('take_quiz', quiz_id=quiz.id)
+
         session_id = str(uuid.uuid4())
         attempt = StudentAttempt.objects.create(
             quiz=quiz,
             student=request.user,
             student_name=request.user.get_full_name() or request.user.email,
             session_id=session_id,
+            total_questions=quiz.questions.count(),
         )
         request.session['attempt_id'] = attempt.id
         request.session['session_id'] = session_id
