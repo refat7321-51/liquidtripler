@@ -629,17 +629,48 @@ def admin_dashboard(request):
         return redirect('admin_login')
 
     quizzes = Quiz.objects.all().order_by('-created_at')
+    assignments = Assignment.objects.all().order_by('-created_at')
     all_attempts = StudentAttempt.objects.all().order_by('-started_at')
-    all_warnings = WarningLog.objects.all().order_by('-timestamp')[:50]
+    all_submissions = AssignmentSubmission.objects.all().select_related('student', 'assignment').order_by('-submitted_at')
+    all_warnings = WarningLog.objects.all().order_by('-timestamp')
+
+    # Determine the currently active/running quiz
+    running_quiz = None
+    for q in quizzes:
+        if q.is_published and not q.is_expired():
+            running_quiz = q
+            break
+    if not running_quiz:
+        running_quiz = quizzes.first()
+
+    # Determine the currently active/running assignment
+    running_assignment = None
+    for a in assignments:
+        if not a.is_deadline_passed:
+            running_assignment = a
+            break
+    if not running_assignment:
+        running_assignment = assignments.first()
+
+    latest_quiz_attempts_count = StudentAttempt.objects.filter(quiz=running_quiz, is_submitted=True).count() if running_quiz else 0
+    latest_assignment_attempts_count = AssignmentSubmission.objects.filter(assignment=running_assignment).count() if running_assignment else 0
 
     context = {
         'quizzes': quizzes,
+        'assignments': assignments,
         'all_attempts': all_attempts,
+        'all_submissions': all_submissions,
         'all_warnings': all_warnings,
         'total_quizzes': quizzes.count(),
+        'total_assignments': assignments.count(),
         'total_attempts': all_attempts.count(),
-        'total_warnings': WarningLog.objects.count(),
+        'total_submissions': all_submissions.count(),
+        'total_warnings': all_warnings.count(),
         'total_students': User.objects.filter(student_profile__isnull=False, is_staff=False, is_superuser=False).count(),
+        'latest_quiz_attempts_count': latest_quiz_attempts_count,
+        'latest_assignment_attempts_count': latest_assignment_attempts_count,
+        'running_quiz': running_quiz,
+        'running_assignment': running_assignment,
     }
     return render(request, 'admin_dashboard.html', context)
 
