@@ -630,9 +630,9 @@ def admin_dashboard(request):
 
     quizzes = Quiz.objects.all().order_by('-created_at')
     assignments = Assignment.objects.all().order_by('-created_at')
-    all_attempts = StudentAttempt.objects.all().order_by('-started_at')
+    all_attempts = StudentAttempt.objects.all().select_related('student__student_profile', 'quiz').order_by('-started_at')
     all_submissions = AssignmentSubmission.objects.all().select_related('student', 'assignment').order_by('-submitted_at')
-    all_warnings = WarningLog.objects.all().order_by('-timestamp')
+    all_warnings = WarningLog.objects.all().select_related('attempt__student__student_profile', 'attempt__quiz').order_by('-timestamp')
 
     # Determine the currently active/running quiz
     running_quiz = None

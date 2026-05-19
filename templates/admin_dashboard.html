@@ -909,8 +909,17 @@
                 <tr class="attempt-row" data-quiz-id="{{ attempt.quiz.id }}" data-is-submitted="{% if attempt.is_submitted %}true{% else %}false{% endif %}">
                     <td>
                         <div class="ad-cell">
+                            {% if attempt.student and not attempt.student.is_staff and attempt.student.student_profile.profile_image %}
+                            <img src="{{ attempt.student.student_profile.profile_image.url }}" class="ad-av-img" alt="{{ attempt.student_name }}">
+                            {% else %}
                             <div class="ad-av">{{ attempt.student_name|slice:":1"|upper }}</div>
+                            {% endif %}
                             <span class="ad-name">{{ attempt.student_name }}</span>
+                            {% if attempt.tab_switch_count > 0 %}
+                            <span class="ad-bdg ad-bdg-o" style="padding: 2px 6px; font-size: 0.72rem; margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 2px;" title="Tab Switch Warnings">
+                                ⚠️ {{ attempt.tab_switch_count }}
+                            </span>
+                            {% endif %}
                         </div>
                     </td>
                     <td><span class="ad-score">{{ attempt.score }}/{{ attempt.total_questions }}</span></td>
@@ -946,8 +955,17 @@
         {% for attempt in all_attempts %}
         <div class="ad-m-card attempt-mobile-card" data-quiz-id="{{ attempt.quiz.id }}">
             <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                {% if attempt.student and not attempt.student.is_staff and attempt.student.student_profile.profile_image %}
+                <img src="{{ attempt.student.student_profile.profile_image.url }}" class="ad-av-img" alt="{{ attempt.student_name }}">
+                {% else %}
                 <div class="ad-av">{{ attempt.student_name|slice:":1"|upper }}</div>
+                {% endif %}
                 <span class="ad-name" style="font-size:1rem;">{{ attempt.student_name }}</span>
+                {% if attempt.tab_switch_count > 0 %}
+                <span class="ad-bdg ad-bdg-o" style="padding: 2px 6px; font-size: 0.72rem; margin-left: 0.5rem; display: inline-flex; align-items: center; gap: 2px;" title="Tab Switch Warnings">
+                    ⚠️ {{ attempt.tab_switch_count }}
+                </span>
+                {% endif %}
             </div>
             <div class="ad-m-card-row">
                 <span class="ad-m-card-label">Score</span>
@@ -1126,7 +1144,16 @@
             <tbody>
                 {% for warning in all_warnings %}
                 <tr class="warning-row" data-quiz-id="{{ warning.attempt.quiz.id }}">
-                    <td><span class="ad-name">{{ warning.attempt.student_name }}</span></td>
+                    <td>
+                        <div class="ad-cell">
+                            {% if warning.attempt.student and not warning.attempt.student.is_staff and warning.attempt.student.student_profile.profile_image %}
+                            <img src="{{ warning.attempt.student.student_profile.profile_image.url }}" class="ad-av-img" alt="{{ warning.attempt.student_name }}">
+                            {% else %}
+                            <div class="ad-av">{{ warning.attempt.student_name|slice:":1"|upper }}</div>
+                            {% endif %}
+                            <span class="ad-name">{{ warning.attempt.student_name }}</span>
+                        </div>
+                    </td>
                     <td>
                         {% if warning.warning_type == 'tab_switch' %}
                         <span class="ad-bdg ad-bdg-o">🔄 Tab Switch</span>
@@ -1150,7 +1177,14 @@
     <div class="ad-mobile-cards" id="warnings-mobile-container">
         {% for warning in all_warnings %}
         <div class="ad-m-card warning-mobile-card" data-quiz-id="{{ warning.attempt.quiz.id }}" style="border-left: 4px solid #ef4444;">
-            <span class="ad-m-card-title">{{ warning.attempt.student_name }}</span>
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                {% if warning.attempt.student and not warning.attempt.student.is_staff and warning.attempt.student.student_profile.profile_image %}
+                <img src="{{ warning.attempt.student.student_profile.profile_image.url }}" class="ad-av-img" alt="{{ warning.attempt.student_name }}">
+                {% else %}
+                <div class="ad-av">{{ warning.attempt.student_name|slice:":1"|upper }}</div>
+                {% endif %}
+                <span class="ad-m-card-title" style="margin: 0; font-size: 1rem;">{{ warning.attempt.student_name }}</span>
+            </div>
             <div class="ad-m-card-row">
                 <span class="ad-m-card-label">Violation</span>
                 <span class="ad-m-card-val">
@@ -1224,9 +1258,13 @@
                 <tr class="submission-row" data-assignment-id="{{ sub.assignment.id }}" data-is-graded="{% if sub.is_graded %}true{% else %}false{% endif %}">
                     <td>
                         <div class="ad-cell">
+                            {% if sub.student and not sub.student.is_staff and sub.student.student_profile.profile_image %}
+                            <img src="{{ sub.student.student_profile.profile_image.url }}" class="ad-av-img" alt="{{ sub.student.get_full_name }}">
+                            {% else %}
                             <div class="ad-av">
                                 {{ sub.student.first_name|slice:":1" }}{{ sub.student.last_name|slice:":1" }}
                             </div>
+                            {% endif %}
                             <div>
                                 <div class="ad-name">{{ sub.student.get_full_name }}</div>
                                 {% if not sub.student.is_staff and sub.student.student_profile %}
