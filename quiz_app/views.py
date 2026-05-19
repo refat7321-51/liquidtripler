@@ -654,7 +654,7 @@ def admin_dashboard(request):
 
     latest_quiz_attempts_count = StudentAttempt.objects.filter(quiz=running_quiz, is_submitted=True).count() if running_quiz else 0
     latest_assignment_attempts_count = AssignmentSubmission.objects.filter(assignment=running_assignment).count() if running_assignment else 0
-    running_quiz_warnings_count = WarningLog.objects.filter(quiz=running_quiz).count() if running_quiz else 0
+    running_quiz_warnings_count = WarningLog.objects.filter(attempt__quiz=running_quiz).count() if running_quiz else 0
 
     context = {
         'quizzes': quizzes,
