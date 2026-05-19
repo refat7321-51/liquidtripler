@@ -81,15 +81,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'quiz_project.wsgi.application'
 
-try:
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config(
-            default='postgresql://neondb_owner:npg_cAtom0jXEY8y@ep-curly-tree-ao9i5ghm.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require',
-            conn_max_age=0
-        )
-    }
-except ImportError:
+# Database configuration
+# Conditionally use Neon PostgreSQL on Vercel (or if DATABASE_URL is set), and fallback to local SQLite for development.
+if os.environ.get('VERCEL') or os.environ.get('DATABASE_URL'):
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.config(
+                default='postgresql://neondb_owner:npg_cAtom0jXEY8y@ep-curly-tree-ao9i5ghm.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require',
+                conn_max_age=0
+            )
+        }
+    except Exception as e:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -154,3 +164,4 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'liquidtripler@gmail.com' 
 EMAIL_HOST_PASSWORD = 'ysomlbnbstogfxdv'
 EMAIL_DEFAULT_FROM_EMAIL = f'Liquid_Triple_R <{EMAIL_HOST_USER}>'
+EMAIL_TIMEOUT = 10
