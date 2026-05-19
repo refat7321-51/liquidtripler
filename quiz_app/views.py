@@ -1096,6 +1096,10 @@ def take_quiz(request, quiz_id):
 
     # Admin can retake quiz freely — skip submission check
     if not request.user.is_staff:
+        if quiz.is_expired():
+            messages.error(request, "This quiz has expired and can no longer be taken.")
+            return redirect('quiz_list')
+
         already_submitted = StudentAttempt.objects.filter(
             student=request.user, quiz=quiz, is_submitted=True
         ).first()
@@ -1723,6 +1727,21 @@ def notice_list(request):
     ).order_by('-publish_at')
     
     notices = list(notices_qs)
+    
+    import re
+    quiz_pattern = re.compile(r'/quiz/(\d+)/')
+    for notice in notices:
+        if notice.link:
+            match = quiz_pattern.search(notice.link)
+            if match:
+                quiz_id = int(match.group(1))
+                try:
+                    from quiz_app.models import Quiz
+                    quiz = Quiz.objects.get(id=quiz_id)
+                    if quiz.is_expired():
+                        notice.is_quiz_expired = True
+                except Quiz.DoesNotExist:
+                    pass
     
     unread_ids = []
     if not request.user.is_staff:
