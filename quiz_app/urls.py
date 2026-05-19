@@ -48,6 +48,7 @@ urlpatterns = [
     path('question/<int:question_id>/delete/', views.delete_question, name='delete_question'),
 
     path('attempt/<int:attempt_id>/view/', views.view_attempt, name='view_attempt'),
+    path('attempt/<int:attempt_id>/delete/', views.delete_attempt, name='delete_attempt'),
 
     # ── Student Dashboard ─────────────────────────────────────
     path('', views.student_dashboard, name='home'),

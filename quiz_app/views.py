@@ -876,6 +876,17 @@ def view_attempt(request, attempt_id):
     return render(request, 'view_attempt.html', context)
 
 
+@login_required(login_url='admin_login')
+@csrf_exempt
+@require_http_methods(["POST"])
+def delete_attempt(request, attempt_id):
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=403)
+    attempt = get_object_or_404(StudentAttempt, id=attempt_id)
+    attempt.delete()
+    return JsonResponse({'success': True})
+
+
 def admin_logout(request):
     logout(request)
     return redirect('admin_login')
