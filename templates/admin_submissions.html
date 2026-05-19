@@ -105,13 +105,12 @@
                                 </a>
                                 {% endif %}
                                 {% if sub.is_graded %}
-                                <a href="{% url 'cancel_grade' sub.id %}{% if assignment_id %}?assignment={{ assignment_id }}{% endif %}" 
-                                   style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: #fef2f2; color: #ef4444; border: 1.5px solid #fee2e2; text-decoration: none; transition: all 0.2s;" 
-                                   title="Reset to Pending"
-                                   onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'"
-                                   onclick="return confirm('Are you sure you want to reset this grade to pending?');">
+                                <button onclick="openConfirmResetModal('{% url 'cancel_grade' sub.id %}{% if assignment_id %}?assignment={{ assignment_id }}{% endif %}')"
+                                        style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: #fef2f2; color: #ef4444; border: 1.5px solid #fee2e2; transition: all 0.2s; cursor: pointer;" 
+                                        title="Reset to Pending"
+                                        onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">
                                     <i class="fas fa-undo"></i>
-                                </a>
+                                </button>
                                 {% endif %}
                             </div>
                         </td>
@@ -169,6 +168,29 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Custom Confirm Reset Modal -->
+<div id="confirmResetModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter: blur(8px); z-index:2000; align-items:center; justify-content:center; animation: fadeInModal 0.3s ease;">
+    <div style="width:90%; max-width:400px; background:white; border-radius:1.5rem; padding:2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); position: relative; overflow: hidden; text-align: center;">
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: #ef4444;"></div>
+        
+        <div style="width: 64px; height: 64px; background: #fef2f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0.5rem auto 1.5rem; font-size: 1.8rem; color: #ef4444;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin: 0 0 0.5rem; font-family: inherit;">Reset Grade?</h3>
+        <p style="color: #64748b; font-size: 0.95rem; margin: 0 0 2rem; line-height: 1.5; font-family: inherit;">This will clear this student's marks and feedback, setting their status back to Pending. Are you sure?</p>
+        
+        <div style="display: flex; gap: 1rem;">
+            <button type="button" class="btn-cancel" onclick="closeConfirmResetModal()" style="flex: 1; padding: 0.9rem; border-radius: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #475569; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                Cancel
+            </button>
+            <a id="confirmResetLink" href="#" style="flex: 1.2; padding: 0.9rem; border-radius: 12px; background: #ef4444; border: none; color: white; font-weight: 700; cursor: pointer; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3);">
+                Yes, Reset
+            </a>
+        </div>
     </div>
 </div>
 
@@ -270,9 +292,20 @@
         }
     });
 
+    function openConfirmResetModal(actionUrl) {
+        document.getElementById('confirmResetLink').href = actionUrl;
+        document.getElementById('confirmResetModal').style.display = 'flex';
+    }
+
+    function closeConfirmResetModal() {
+        document.getElementById('confirmResetModal').style.display = 'none';
+    }
+
     window.onclick = function(event) {
-        const modal = document.getElementById('gradeModal');
-        if (event.target == modal) closeGradeModal();
+        const gradeModal = document.getElementById('gradeModal');
+        const confirmResetModal = document.getElementById('confirmResetModal');
+        if (event.target == gradeModal) closeGradeModal();
+        if (event.target == confirmResetModal) closeConfirmResetModal();
     }
 </script>
 {% endblock %}
