@@ -658,7 +658,7 @@
         <div class="ad-stat-ico ad-ico-orange" id="stat-card-3-icon">⚠️</div>
         <div>
             <div class="ad-stat-label" id="stat-card-3-label">Warning Logs</div>
-            <div class="ad-stat-num" id="stat-card-3-val">{{ total_warnings }}</div>
+            <div class="ad-stat-num" id="stat-card-3-val">{{ running_quiz_warnings_count }}</div>
         </div>
     </div>
 </div>
@@ -1575,6 +1575,18 @@
         const assignVal = document.getElementById('stat-card-assignment-val');
         if (assignVal) {
             animateValue('stat-card-assignment-val', visibleSubmissionsCount);
+        }
+
+        // Update warnings count dynamically based on currentQuizId
+        let visibleWarningsCount = 0;
+        document.querySelectorAll('.warning-row').forEach(row => {
+            if (row.dataset.quizId === currentQuizId) {
+                visibleWarningsCount++;
+            }
+        });
+        const warnVal = document.getElementById('stat-card-3-val');
+        if (warnVal) {
+            animateValue('stat-card-3-val', visibleWarningsCount);
         }
     }
 
