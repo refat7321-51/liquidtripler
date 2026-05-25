@@ -3,6 +3,7 @@ Django settings for quiz_project project.
 """
 
 from pathlib import Path
+from datetime import timedelta
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -190,8 +191,17 @@ CSP_CONNECT_SRC = ("'self'",)
 
 # Brute-Force Lockout (django-axes) Settings
 AXES_FAILURE_LIMIT = 5                      # Lockout after 5 failed login attempts
-AXES_COOLOFF_TIME = 1                       # Lockout cooldown time in hours (1 hour)
+AXES_COOLOFF_TIME = timedelta(hours=1)      # Lockout cooldown: 1 hour (must be timedelta in axes 6.x)
 AXES_RESET_ON_SUCCESS = True                # Reset counter when login succeeds
-AXES_CLIENT_IP_HEADER = 'HTTP_X_REAL_IP'    # Fixes 400 Bad Request on Vercel by using single real IP
+# Vercel sits behind 1 proxy layer — tell django-ipware to trust X-Forwarded-For
+# and take the right-most IP (the one added by Vercel's edge, which is trustworthy).
+# This fixes the HTTP 400 Bad Request that occurred when ipware found multiple IPs
+# in the X-Forwarded-For header and raised a SuspiciousOperation.
+AXES_IPWARE_META_PRECEDENCE_ORDER = [
+    'HTTP_X_FORWARDED_FOR',
+    'REMOTE_ADDR',
+]
+AXES_IPWARE_PROXY_COUNT = 1                 # Vercel adds exactly 1 proxy hop
+AXES_IPWARE_PROXY_ORDER = 'right-most'      # Trust the right-most IP in X-Forwarded-For
 
 
