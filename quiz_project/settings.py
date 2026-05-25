@@ -192,4 +192,6 @@ CSP_CONNECT_SRC = ("'self'",)
 AXES_FAILURE_LIMIT = 5                      # Lockout after 5 failed login attempts
 AXES_COOLOFF_TIME = 1                       # Lockout cooldown time in hours (1 hour)
 AXES_RESET_ON_SUCCESS = True                # Reset counter when login succeeds
+AXES_CLIENT_IP_HEADER = 'HTTP_X_REAL_IP'    # Fixes 400 Bad Request on Vercel by using single real IP
+
 
