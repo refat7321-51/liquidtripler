@@ -14,3 +14,6 @@ whitenoise==6.6.0
 xhtml2pdf==0.2.17
 reportlab==4.0.9
 svglib==1.2.1
+django-csp==3.8
+django-axes==6.3.0
+

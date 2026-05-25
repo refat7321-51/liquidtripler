@@ -42,3 +42,20 @@ class UserActivityMiddleware:
         
         response = self.get_response(request)
         return response
+
+
+class RemoveFingerprintingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # Remove or mask fingerprinting/technical disclosure headers
+        sensitive_headers = ['Server', 'X-Powered-By', 'X-Runtime']
+        for header in sensitive_headers:
+            if response.has_header(header):
+                del response[header]
+                
+        return response
+

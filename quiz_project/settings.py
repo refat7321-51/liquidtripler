@@ -9,7 +9,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-quiz-app-secret-key-change-in-production'
 
-DEBUG = True
+# Dynamically disable DEBUG on Vercel
+DEBUG = not os.environ.get('VERCEL')
 
 ALLOWED_HOSTS = ['*']
 
@@ -45,22 +46,32 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'cloudinary_storage',
     'cloudinary',
+    'axes',  # <--- Axes brute-force protection app
     'quiz_app',
 ]
 
 MIDDLEWARE = [
+    'quiz_app.middleware.RemoveFingerprintingMiddleware',  # <--- Strips fingerprinting headers first
     'django.middleware.security.SecurityMiddleware',
+    'csp.middleware.CSPMiddleware',  # <--- Content Security Policy middleware
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',  # <--- Brute force tracking middleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'quiz_app.middleware.UserActivityMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesBackend',  # Keep first to monitor login attempts
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 ROOT_URLCONF = 'quiz_project.urls'
+
 
 TEMPLATES = [
     {
@@ -164,4 +175,21 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'liquidtripler@gmail.com' 
 EMAIL_HOST_PASSWORD = 'ysomlbnbstogfxdv'
 EMAIL_DEFAULT_FROM_EMAIL = f'Liquid_Triple_R <{EMAIL_HOST_USER}>'
-EMAIL_TIMEOUT = 10
+EMAIL_TIMEOUT = 10
+
+# ==================== SECURITY HEADERS & POLICIES ====================
+# Content Security Policy (CSP) Settings
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net")
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net")
+CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com")
+CSP_IMG_SRC = ("'self'", "data:", "https://res.cloudinary.com")
+CSP_FRAME_SRC = ("'none'",)
+CSP_FRAME_ANCESTORS = ("'self'",)
+CSP_CONNECT_SRC = ("'self'",)
+
+# Brute-Force Lockout (django-axes) Settings
+AXES_FAILURE_LIMIT = 5                      # Lockout after 5 failed login attempts
+AXES_COOLOFF_TIME = 1                       # Lockout cooldown time in hours (1 hour)
+AXES_RESET_ON_SUCCESS = True                # Reset counter when login succeeds
+

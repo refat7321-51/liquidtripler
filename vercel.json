@@ -15,6 +15,10 @@
   ],
   "routes": [
     {
+      "src": "/.well-known/security.txt",
+      "dest": "quiz_project/wsgi.py"
+    },
+    {
       "src": "/static/(.*)",
       "dest": "staticfiles/$1"
     },
