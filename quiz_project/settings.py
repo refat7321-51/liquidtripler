@@ -181,13 +181,13 @@ EMAIL_TIMEOUT = 10
 # ==================== SECURITY HEADERS & POLICIES ====================
 # Content Security Policy (CSP) Settings
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net")
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://*.vercel-scripts.com")
 CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com")
 CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com")
 CSP_IMG_SRC = ("'self'", "data:", "https://res.cloudinary.com")
 CSP_FRAME_SRC = ("'none'",)
 CSP_FRAME_ANCESTORS = ("'self'",)
-CSP_CONNECT_SRC = ("'self'",)
+CSP_CONNECT_SRC = ("'self'", "https://*.vercel-insights.com")
 
 # Brute-Force Lockout (django-axes) Settings
 AXES_FAILURE_LIMIT = 5                      # Lockout after 5 failed login attempts
@@ -204,4 +204,4 @@ AXES_IPWARE_META_PRECEDENCE_ORDER = [
 AXES_IPWARE_PROXY_COUNT = 1                 # Vercel adds exactly 1 proxy hop
 AXES_IPWARE_PROXY_ORDER = 'right-most'      # Trust the right-most IP in X-Forwarded-For
 
-
+
