@@ -59,3 +59,23 @@ class RemoveFingerprintingMiddleware:
                 
         return response
 
+
+import traceback
+from django.http import HttpResponse
+
+class ExceptionLoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            return self.get_response(request)
+        except Exception as e:
+            tb = traceback.format_exc()
+            return HttpResponse(
+                f"Diagnostic Exception:\n\n{str(e)}\n\nTraceback:\n{tb}",
+                content_type="text/plain",
+                status=500
+            )
+
+

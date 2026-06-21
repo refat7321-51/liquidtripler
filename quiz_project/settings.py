@@ -52,6 +52,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'quiz_app.middleware.ExceptionLoggingMiddleware',  # <--- Catch exceptions for diagnostics
     'quiz_app.middleware.RemoveFingerprintingMiddleware',  # <--- Strips fingerprinting headers first
     'django.middleware.security.SecurityMiddleware',
     'csp.middleware.CSPMiddleware',  # <--- Content Security Policy middleware
