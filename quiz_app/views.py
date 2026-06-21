@@ -313,15 +313,16 @@ def verify_otp(request):
                     )
                     # This will trigger StudentProfile.save() and its student_id logic
                     StudentProfile.objects.create(user=user)
-                    
-                    # Clear session
-                    for key in ['reg_data', 'reg_otp', 'otp_expiry']:
-                        if key in request.session:
-                            del request.session[key]
-                    
-                    login(request, user)
-                    messages.success(request, f"Welcome {full_name}! Your account has been created.")
-                    return redirect('home')
+                
+                # Clear session (outside transaction)
+                for key in ['reg_data', 'reg_otp', 'otp_expiry']:
+                    if key in request.session:
+                        del request.session[key]
+                
+                # Login the user (outside transaction)
+                login(request, user)
+                messages.success(request, f"Welcome {full_name}! Your account has been created.")
+                return redirect('home')
             except Exception as e:
                 # Any error (like IntegrityError) will trigger rollback of User creation
                 return render(request, 'otp_verify.html', {
