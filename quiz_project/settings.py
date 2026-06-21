@@ -193,15 +193,8 @@ CSP_CONNECT_SRC = ("'self'",)
 AXES_FAILURE_LIMIT = 5                      # Lockout after 5 failed login attempts
 AXES_COOLOFF_TIME = timedelta(hours=1)      # Lockout cooldown: 1 hour (must be timedelta in axes 6.x)
 AXES_RESET_ON_SUCCESS = True                # Reset counter when login succeeds
-# Vercel sits behind 1 proxy layer — tell django-ipware to trust X-Forwarded-For
-# and take the right-most IP (the one added by Vercel's edge, which is trustworthy).
-# This fixes the HTTP 400 Bad Request that occurred when ipware found multiple IPs
-# in the X-Forwarded-For header and raised a SuspiciousOperation.
-AXES_IPWARE_META_PRECEDENCE_ORDER = [
-    'HTTP_X_FORWARDED_FOR',
-    'REMOTE_ADDR',
-]
-AXES_IPWARE_PROXY_COUNT = 1                 # Vercel adds exactly 1 proxy hop
-AXES_IPWARE_PROXY_ORDER = 'right-most'      # Trust the right-most IP in X-Forwarded-For
+# Tell django-axes to use our custom IP lookup function.
+# This avoids django-ipware's strict proxy counting checks, which raised a SuspiciousOperation (HTTP 400 Bad Request) on Vercel.
+AXES_CLIENT_IP_CALLABLE = 'quiz_app.ip_helper.get_client_ip'
 
 
