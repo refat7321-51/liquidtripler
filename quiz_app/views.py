@@ -2449,3 +2449,24 @@ def view_resource_file(request, resource_id):
         return response
     except Resource.DoesNotExist:
         raise Http404("Resource not found")
+
+
+import sys
+import traceback
+from django.http import HttpResponseBadRequest
+
+def custom_bad_request_handler(request, exception=None):
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    tb_str = ""
+    if exc_value:
+        tb_str = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    else:
+        tb_str = f"No exception traceback available. Exception: {exception}"
+
+    return HttpResponseBadRequest(
+        f"Custom 400 Bad Request Diagnostic Page\n\n"
+        f"Exception: {exception}\n\n"
+        f"Traceback:\n{tb_str}",
+        content_type="text/plain"
+    )
+

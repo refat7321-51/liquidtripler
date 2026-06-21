@@ -7,6 +7,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import HttpResponse
 
+handler400 = 'quiz_app.views.custom_bad_request_handler'
+
+
 def security_txt(request):
     security_info = (
         "Contact: mailto:security@yourdomain.com\n"
