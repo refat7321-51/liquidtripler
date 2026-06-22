@@ -8,7 +8,7 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-quiz-app-secret-key-change-in-production')
+SECRET_KEY = 'django-insecure-quiz-app-secret-key-change-in-production'
 
 # Dynamically disable DEBUG on Vercel
 DEBUG = not os.environ.get('VERCEL')
@@ -96,13 +96,12 @@ WSGI_APPLICATION = 'quiz_project.wsgi.application'
 
 # Database configuration
 # Conditionally use Neon PostgreSQL on Vercel (or if DATABASE_URL is set), and fallback to local SQLite for development.
-_DATABASE_URL = os.environ.get('DATABASE_URL')
-if os.environ.get('VERCEL') or _DATABASE_URL:
+if os.environ.get('VERCEL') or os.environ.get('DATABASE_URL'):
     try:
         import dj_database_url
         DATABASES = {
             'default': dj_database_url.config(
-                default=_DATABASE_URL or '',
+                default='postgresql://neondb_owner:npg_cAtom0jXEY8y@ep-curly-tree-ao9i5ghm.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require',
                 conn_max_age=0
             )
         }
@@ -149,9 +148,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Cloudinary setup (Enforced in Production)
 if os.environ.get('VERCEL') or not DEBUG:
     CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
-        'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
-        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
+        'CLOUD_NAME': 'dga82u1w1',
+        'API_KEY': '286863492173943',
+        'API_SECRET': 'aK11zRB-naqxysF-u6Kzk3GBr90',
     }
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
@@ -175,8 +174,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'liquidtripler@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_HOST_USER = 'liquidtripler@gmail.com' 
+EMAIL_HOST_PASSWORD = 'ysomlbnbstogfxdv'
 EMAIL_DEFAULT_FROM_EMAIL = f'Liquid_Triple_R <{EMAIL_HOST_USER}>'
 EMAIL_TIMEOUT = 10
 
