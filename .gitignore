@@ -52,3 +52,5 @@ venv/
 env/
 .vercel
 .env*.local
+.env.production
+.env.development
