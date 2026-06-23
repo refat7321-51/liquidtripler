@@ -86,71 +86,56 @@ quiz_app/
 ## Installation & Setup
 
 ### Prerequisites
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip (Python package manager)
-- Virtual environment (recommended)
 
-### Step 1: Extract the Project
+### Step 1: Open Terminal / Command Prompt
+Open your terminal (macOS/Linux) or Command Prompt / PowerShell (Windows) and navigate to the project directory:
 ```bash
-unzip quiz_app.zip
 cd quiz_app
 ```
 
-### Step 2: Create Virtual Environment
+### Step 2: Create & Activate Virtual Environment
+Create a virtual environment to manage dependencies:
 ```bash
-# Windows
+# Create venv
 python -m venv venv
 
-# macOS/Linux
-python3 -m venv venv
+# Activate venv (Windows)
+venv\Scripts\activate
+
+# Activate venv (macOS/Linux)
 source venv/bin/activate
 ```
 
 ### Step 3: Install Dependencies
+Install all the required python packages from `requirements.txt`:
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### Step 4: Run Migrations
+### Step 4: Run Database Migrations
+Create and configure the database tables using SQLite locally:
 ```bash
-
+python manage.py migrate --run-syncdb
 ```
 
-### Step 5: Create Superuser (Admin Account)
-```bash
-python manage.py createsuperuser
-```
-
-When prompted:
-```
-Username: admin
-Email: admin@example.com
-Password: admin123
-Password (again): admin123
-```
-
-### Step 6: Create Sample Admin User
+### Step 5: Create Admin Account (Superuser)
+Create an administrator account to log in to the admin panel:
 ```bash
 python manage.py createsuperuser
 ```
+Follow the prompts to enter a username, email, and password.
 
-Or use Django shell:
-```bash
-python manage.py shell
-```
-
-```python
-from django.contrib.auth.models import User
-User.objects.create_superuser('admin', 'admin@test.com', 'admin123')
-exit()
-```
-
-### Step 7: Collect Static Files
+### Step 6: Collect Static Files
+Prepare static assets (CSS, JS, images) for the application:
 ```bash
 python manage.py collectstatic --noinput
 ```
 
-### Step 8: Run Development Server
+### Step 7: Run the Application
+Start the Django development server:
 ```bash
 python manage.py runserver
 ```
