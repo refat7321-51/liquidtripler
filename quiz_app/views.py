@@ -253,8 +253,12 @@ def student_register(request):
             )
             return redirect('verify_otp')
         except Exception as e:
-            errors['email'] = f"Failed to send OTP. Please check your email or try again. Error: {str(e)}"
-            return render(request, 'student_register.html', {'errors': errors, 'form_data': request.POST})
+            print("\n" + "="*50)
+            print(f"⚠️ EMAIL SENDING FAILED (Local Dev Fallback): {str(e)}")
+            print(f"🔑 LOCAL REGISTRATION OTP: {otp}")
+            print("="*50 + "\n")
+            messages.warning(request, f"Email sending failed (no internet or SMTP blocked), but you can use the debug OTP: {otp} to complete registration.")
+            return redirect('verify_otp')
 
     return render(request, 'student_register.html')
 
@@ -365,7 +369,11 @@ def resend_otp(request):
         )
         messages.success(request, "A new OTP has been sent to your email.")
     except Exception as e:
-        messages.error(request, f"Failed to send OTP: {str(e)}")
+        print("\n" + "="*50)
+        print(f"⚠️ EMAIL SENDING FAILED (Local Dev Fallback): {str(e)}")
+        print(f"🔑 LOCAL RESEND REGISTRATION OTP: {otp}")
+        print("="*50 + "\n")
+        messages.warning(request, f"Email sending failed, but you can use the debug OTP: {otp} to complete registration.")
 
     return redirect('verify_otp')
 
@@ -391,13 +399,21 @@ def student_password_reset(request):
                 'otp': otp
             })
             
-            send_email_async(
-                subject,
-                f"Your password reset OTP is {otp}",
-                [email],
-                html_message=html_message
-            )
-            return redirect('student_password_reset_verify')
+            try:
+                send_email_async(
+                    subject,
+                    f"Your password reset OTP is {otp}",
+                    [email],
+                    html_message=html_message
+                )
+                return redirect('student_password_reset_verify')
+            except Exception as e:
+                print("\n" + "="*50)
+                print(f"⚠️ EMAIL SENDING FAILED (Local Dev Fallback): {str(e)}")
+                print(f"🔑 LOCAL PASSWORD RESET OTP: {otp}")
+                print("="*50 + "\n")
+                messages.warning(request, f"Email sending failed, but you can use the debug OTP: {otp} to reset your password.")
+                return redirect('student_password_reset_verify')
         except User.DoesNotExist:
             return render(request, 'student_password_reset.html', {'error': 'No account found with this email.'})
             
@@ -470,12 +486,20 @@ def resend_password_reset_otp(request):
 
     subject = f"Password Reset OTP - {otp}"
     html_message = render_to_string('emails/password_reset_email.html', {'otp': otp})
-    send_email_async(
-        subject,
-        f"Your new password reset OTP is {otp}",
-        [email],
-        html_message=html_message
-    )
+    try:
+        send_email_async(
+            subject,
+            f"Your new password reset OTP is {otp}",
+            [email],
+            html_message=html_message
+        )
+        messages.success(request, "A new OTP has been sent to your email.")
+    except Exception as e:
+        print("\n" + "="*50)
+        print(f"⚠️ EMAIL SENDING FAILED (Local Dev Fallback): {str(e)}")
+        print(f"🔑 LOCAL RESEND PASSWORD RESET OTP: {otp}")
+        print("="*50 + "\n")
+        messages.warning(request, f"Email sending failed, but you can use the debug OTP: {otp} to reset your password.")
     return redirect('student_password_reset_verify')
 
 
