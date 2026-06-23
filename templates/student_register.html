@@ -370,9 +370,12 @@
             
             if (btn) {
                 btn.classList.add('loading');
-                btn.disabled = true;
                 if (text) text.innerText = 'Sending OTP...';
                 if (icon) icon.className = 'fas fa-spinner fa-spin';
+                // Use setTimeout to allow the submit event to propagate before disabling the button
+                setTimeout(function() {
+                    btn.disabled = true;
+                }, 0);
             }
         });
     }
