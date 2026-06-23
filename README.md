@@ -90,10 +90,7 @@ quiz_app/
 - pip (Python package manager)
 
 ### Step 1: Open Terminal / Command Prompt
-Open your terminal (macOS/Linux) or Command Prompt / PowerShell (Windows) and navigate to the project directory:
-```bash
-cd quiz_app
-```
+Open your terminal (macOS/Linux) or Command Prompt / PowerShell (Windows) directly inside the project directory (where `manage.py` is located).
 
 ### Step 2: Create & Activate Virtual Environment
 Create a virtual environment to manage dependencies:
