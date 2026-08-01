@@ -178,8 +178,8 @@ The application will be available at: **http://127.0.0.1:8000**
 
 1. **Admin Login**
    - Click "Admin Login" in navigation
-   - Username: 
-   - Password: 
+   - Username: Contact_with_this_repo_creator.
+   - Password: Contact_with_this_repo_creator.
 
 2. **Dashboard**
    - View statistics (total quizzes, attempts, warnings)
