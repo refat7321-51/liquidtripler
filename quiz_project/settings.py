@@ -170,12 +170,13 @@ LOGIN_URL = 'student_login'
 LOGIN_REDIRECT_URL = 'home'
 
 # Email Configuration (SMTP for real emails)
+# Email Configuration (SMTP for real emails)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'liquidtripler@gmail.com' 
-EMAIL_HOST_PASSWORD = 'gglmouiveftncazp'
+EMAIL_HOST_USER = 'asmrifat908@gmail.com' 
+EMAIL_HOST_PASSWORD = 'odebijjvhdeofaok'  
 EMAIL_DEFAULT_FROM_EMAIL = f'Liquid_Triple_R <{EMAIL_HOST_USER}>'
 EMAIL_TIMEOUT = 10
 
