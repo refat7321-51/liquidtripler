@@ -175,7 +175,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'liquidtripler@gmail.com' 
-EMAIL_HOST_PASSWORD = 'ysomlbnbstogfxdv'
+EMAIL_HOST_PASSWORD = 'gglmouiveftncazp'
 EMAIL_DEFAULT_FROM_EMAIL = f'Liquid_Triple_R <{EMAIL_HOST_USER}>'
 EMAIL_TIMEOUT = 10
 
@@ -198,4 +198,4 @@ AXES_RESET_ON_SUCCESS = True                # Reset counter when login succeeds
 # This avoids django-ipware's strict proxy counting checks, which raised a SuspiciousOperation (HTTP 400 Bad Request) on Vercel.
 AXES_CLIENT_IP_CALLABLE = 'quiz_app.ip_helper.get_client_ip'
 
-
+
